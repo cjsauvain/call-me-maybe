@@ -19,3 +19,6 @@ Youtube:
     uv:
         - https://docs.astral.sh/uv/concepts/projects/dependencies/#project-dependencies
             -> [tool.uv.sources]
+    Tokenizer:
+        - https://www.youtube.com/watch?v=zduSFxRajkE&list=PLAqhIrjkxbuWI23v9cThsA9GvCAUhRvKZ&index=9
+            -> Byte-Pair Encoding (BPE)
