@@ -11,10 +11,10 @@ def produce_output(
 ):
     model = Small_LLM_Model()
 
-    print(model.get_pvocab_file())
-    # output = []
-    # for input in inputs:
-    #     input_token_ids = model.encode(input.prompt)
+    output = []
+    for input in inputs:
+        input_ids = model.encode(input.prompt)
+        model.get_logits_from_input_ids(input_ids)
 
 
 def main() -> None:
