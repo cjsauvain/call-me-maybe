@@ -1,24 +1,31 @@
-Youtube:
-    Function Calling:
-        - https://www.youtube.com/watch?v=aqdWSYWC_LI
-            -> OpenAi Function Calling
-    Pytest:
-        - https://www.youtube.com/watch?v=EgpLj86ZHFQ
-            -> Fixtures
-            -> Parameterized testing
-            -> Mocks
-    Pydantic:
-        - https://www.youtube.com/watch?v=XIdQ6gO3Anc
-            -> Basics
-        - https://pydantic.dev/docs/validation/dev/concepts/type_adapter/
-            -> Type Adapter
-        - https://pydantic.dev/docs/validation/latest/api/pydantic/config/
-            -> ConfigDict
-        - https://pydantic.dev/docs/validation/2.3/usage/model_config/
-            -> model_config
-    uv:
-        - https://docs.astral.sh/uv/concepts/projects/dependencies/#project-dependencies
-            -> [tool.uv.sources]
-    Tokenizer:
-        - https://www.youtube.com/watch?v=zduSFxRajkE&list=PLAqhIrjkxbuWI23v9cThsA9GvCAUhRvKZ&index=9
-            -> Byte-Pair Encoding (BPE)
+Function Calling:
+    - https://www.youtube.com/watch?v=aqdWSYWC_LI
+        -> OpenAi Function Calling
+Pytest:
+    - https://www.youtube.com/watch?v=EgpLj86ZHFQ
+        -> Fixtures
+        -> Parameterized testing
+        -> Mocks
+Pydantic:
+    - https://www.youtube.com/watch?v=XIdQ6gO3Anc
+        -> Basics
+    - https://pydantic.dev/docs/validation/dev/concepts/type_adapter/
+        -> Type Adapter
+    - https://pydantic.dev/docs/validation/latest/api/pydantic/config/
+        -> ConfigDict
+    - https://pydantic.dev/docs/validation/2.3/usage/model_config/
+        -> model_config
+uv:
+    - https://docs.astral.sh/uv/concepts/projects/dependencies/#project-dependencies
+        -> [tool.uv.sources]
+Tokenizer:
+    - https://www.youtube.com/watch?v=zduSFxRajkE&list=PLAqhIrjkxbuWI23v9cThsA9GvCAUhRvKZ&index=9
+        -> Byte-Pair Encoding (BPE)
+Qwen:
+    - https://qwen.readthedocs.io/en/latest/getting_started/concepts.html
+        -> Chat Model + Control tokens
+Automata:
+    - https://www.youtube.com/playlist?list=PLBlnK6fEyqRhqpOGRpt_v7FtYW2y10yTN
+        -> PushDown Automata (PDA)
+LLMs:
+    - For specific questions and a deeper understanding of topics.

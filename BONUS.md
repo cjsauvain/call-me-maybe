@@ -1,0 +1,5 @@
+- Support for Anthropic/OpenAI models
+- Recoding the BPE algorithm from scratch
+- Performance optimization: caching
+- Visualization of generation process
+- Demonstration of constrained decoding integration with encoding/decoding
