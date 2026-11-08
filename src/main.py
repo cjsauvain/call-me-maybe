@@ -1,4 +1,5 @@
 import json
+import sys
 from textwrap import dedent
 from typing import Callable
 
@@ -7,6 +8,7 @@ from src.function_calling.function_call_input import FuncCallInput
 from src.function_calling.function_definitions import FuncDefinitions
 from src.function_calling.validation import json_input_validation
 from src.parsing.parse_cli import parse_cli
+from src.pda import PushDownAutomata
 
 
 def _load_json_file(path_provider: Callable) -> dict[str, int]:
@@ -98,11 +100,28 @@ def main() -> None:
     args = parse_cli()
 
     # Get Prompt + Function definitions
-    inputs, func_definitions = json_input_validation(
-        args.input, args.function_definitions
-    )
+    # inputs, func_definitions = json_input_validation(
+    #     args.input, args.function_definitions
+    # )
     # Produce output using Qwen
-    produce_output(inputs, func_definitions)
+    # produce_output(inputs, func_definitions)
+    pda = PushDownAutomata()
+    pda.stack.append("{")
+    output = '{"prompt": "What is the sum of 2 and 3?","name": "'
+    end = False
+
+    while not end:
+        user_input = input("token:")
+        if user_input == "break":
+            break
+        for char in user_input:
+            if end:
+                break
+            to_append, end = pda.transition(char)
+            if not end:
+                output += to_append
+
+    print(output)
 
 
 if __name__ == "__main__":
