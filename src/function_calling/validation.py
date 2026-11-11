@@ -1,8 +1,8 @@
 from pathlib import Path
 
 from pydantic import ValidationError
-from src.function_calling.function_call_input import FuncCallInput
-from src.function_calling.function_definitions import FuncDefinitions
+from src.function_calling.func_call_input import FuncCallInput
+from src.function_calling.func_definitions import FuncDefinitions
 from src.file_io import load_func_call_inputs, load_func_definitions
 
 

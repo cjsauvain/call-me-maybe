@@ -1,8 +1,8 @@
 from pathlib import Path
 
 from pydantic import TypeAdapter
-from src.function_calling.function_call_input import FuncCallInput
-from src.function_calling.function_definitions import FuncDefinitions
+from src.function_calling.func_call_input import FuncCallInput
+from src.function_calling.func_definitions import FuncDefinitions
 
 
 def load_func_call_inputs(path: Path) -> list[FuncCallInput]:

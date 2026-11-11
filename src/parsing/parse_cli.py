@@ -7,7 +7,7 @@ def parse_cli() -> argparse.Namespace:
     )
 
     parser.add_argument(
-        "--function-definitions",
+        "--func-definitions",
         help="JSON file containing function definitions for the LLM",
         type=str,
         default="./data/input/function_definitions.json",
