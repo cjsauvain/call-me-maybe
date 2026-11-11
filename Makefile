@@ -6,6 +6,9 @@ install:
 run:
 	uv run --env-file .env call-me-maybe
 
+help:
+	uv run call-me-maybe -h
+
 debug:
 	uv run python -m pdb .venv/bin/call-me-maybe
 
@@ -25,4 +28,4 @@ lint-strict:
 	flake8
 	mypy . --strict
 
-.PHONY: install run debug clean lint lint-strict
+.PHONY: install run help debug clean lint lint-strict
