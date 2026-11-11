@@ -1,0 +1,6 @@
+- Validate functions name
+- Validate arguments name
+- Validate value types
+- Verify type hinting everywhere
+- Think about "," at end of argument value (for types number, boolean, null) with args_nb == 1
+- Rename Pushdown Automaton as Finite-State Machine

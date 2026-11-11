@@ -1,5 +1,4 @@
-- Support for Anthropic/OpenAI models
-- Recoding the BPE algorithm from scratch
-- Performance optimization: caching
-- Visualization of generation process
+- Recoding the BPE algorithm from scratch (x2)
+- Performance optimization: caching|batching (x2)
 - Demonstration of constrained decoding integration with encoding/decoding
+- Support for complex nested function arguments

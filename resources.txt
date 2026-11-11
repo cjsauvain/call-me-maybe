@@ -27,5 +27,9 @@ Qwen:
 Automata:
     - https://www.youtube.com/playlist?list=PLBlnK6fEyqRhqpOGRpt_v7FtYW2y10yTN
         -> PushDown Automata (PDA)
+    - https://web.stanford.edu/class/cs123/lectures/CS123_lec07_Finite_State_Machine.pdf
+        -> Finite-State Machine
+JSON Schema:
+    - https://json-schema.org/understanding-json-schema/reference/type?utm_source=chatgpt.com
 LLMs:
     - For specific questions and a deeper understanding of topics.
