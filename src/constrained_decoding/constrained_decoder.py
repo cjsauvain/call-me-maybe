@@ -7,25 +7,21 @@ class ConstrainedDecoder:
         self.model: Small_LLM_Model = model
         self.pda: JSONPushdownAutomaton = pda
 
-    def decode(self, logits: list[float]) -> dict[int, tuple[str, list]]:
-        candidate_transitions: dict[int, tuple[str, list]] = {}
+    def decode(self, logits: list[float]) -> dict[int, str]:
+        candidate_transitions: dict[int, str] = {}
         for logit_idx, _ in enumerate(logits):
+            if logit_idx >= 151643:
+                logits[logit_idx] = float('-inf')
+                continue
             token = self.model.decode([logit_idx])
-            state_copy, stack_copy = (
-                self.pda.get_state(),
-                self.pda.get_stack_copy()
-            )
+            state_copy = self.pda.get_state()
             for char in token:
-                status = self.pda.transition(char)
-                if status == "error":
+                state = self.pda.transition(char)
+                if state == "error":
                     logits[logit_idx] = float('-inf')
                     break
-            if status != "error":
-                candidate_transitions[logit_idx] = (
-                    self.pda.get_state(),
-                    self.pda.get_stack()
-                )
+            if state != "error":
+                candidate_transitions[logit_idx] = state
             self.pda.set_state(state_copy)
-            self.pda.set_stack(stack_copy)
 
         return candidate_transitions
