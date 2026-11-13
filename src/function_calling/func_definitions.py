@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, model_validator
 from src.function_calling.param_types import ParamTypeName
 
 
@@ -6,6 +6,20 @@ class ParamModel(BaseModel):
     model_config = ConfigDict(extra='forbid')
 
     type: ParamTypeName
+    properties: dict[str, ParamModel] | None = None
+    items: ParamModel | None = None
+
+    @model_validator(mode="after")
+    def check_nested_fields(self) -> ParamModel:
+        if self.type == "array" and not self.items:
+            raise ValueError("Missing \"items\" key.")
+        if self.type != "array" and self.items:
+            raise ValueError("\"items\" key belongs to arrays only.")
+        if self.type == "object" and not self.properties:
+            raise ValueError("Missing \"properties\" key.")
+        if self.type != "object" and self.properties:
+            raise ValueError("\"properties\" key belongs to objects only.")
+        return self
 
 
 class FuncDefinitions(BaseModel):

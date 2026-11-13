@@ -1,4 +1,6 @@
+from collections import defaultdict
 import json
+import pprint
 
 
 def _add_new_entry(any_transition_table: dict, state: str, char: str) -> str:
@@ -35,12 +37,14 @@ def _build_key_transitions(
 
 def _build_arg_string_transitions(
         func_params_transition_table: dict,
-        _: dict, arg_name: str, state: str
+        _: dict, arg_name: str, state: str,
+        add_key: bool = True
 ) -> str:
-    state = _build_key_transitions(
-        func_params_transition_table, state,
-        "\"" + arg_name + "\":"
-    )
+    if add_key:
+        state = _build_key_transitions(
+            func_params_transition_table, state,
+            "\"" + arg_name + "\":"
+        )
     func_params_transition_table[(state, "\"")] = f"STR_{arg_name}"
     func_params_transition_table[(f"STR_{arg_name}", "\\")] = \
         f"ESC_{arg_name}"
@@ -56,12 +60,14 @@ def _build_arg_string_transitions(
 
 def _build_arg_number_transitions(
         func_params_transition_table: dict,
-        _: dict, arg_name: str, state: str
+        _: dict, arg_name: str, state: str,
+        add_key: bool = True
 ) -> str:
-    state = _build_key_transitions(
-        func_params_transition_table, state,
-        "\"" + arg_name + "\":"
-    )
+    if add_key:
+        state = _build_key_transitions(
+            func_params_transition_table, state,
+            "\"" + arg_name + "\":"
+        )
     func_params_transition_table[(state, "-")] = \
         f"NB_{arg_name}"
     func_params_transition_table[(state, "DIGIT")] = \
@@ -78,12 +84,14 @@ def _build_arg_number_transitions(
 
 def _build_arg_boolean_transitions(
         func_params_transition_table: dict,
-        _: dict, arg_name: str, state: str
+        _: dict, arg_name: str, state: str,
+        add_key: bool = True
 ) -> str:
-    state = _build_key_transitions(
-        func_params_transition_table, state,
-        "\"" + arg_name + "\":"
-    )
+    if add_key:
+        state = _build_key_transitions(
+            func_params_transition_table, state,
+            "\"" + arg_name + "\":"
+        )
     func_params_transition_table[(state, "t")] = \
         f"BOOL_T_{arg_name}"
     func_params_transition_table[(f"BOOL_T_{arg_name}", "r")] = \
@@ -108,12 +116,14 @@ def _build_arg_boolean_transitions(
 
 def _build_arg_null_transitions(
         func_params_transition_table: dict,
-        _: dict, arg_name: str, state: str
+        _: dict, arg_name: str, state: str,
+        add_key: bool = True
 ) -> str:
-    state = _build_key_transitions(
-        func_params_transition_table, state,
-        "\"" + arg_name + "\":"
-    )
+    if add_key:
+        state = _build_key_transitions(
+            func_params_transition_table, state,
+            "\"" + arg_name + "\":"
+        )
     func_params_transition_table[(state, "n")] = \
         f"NULL_N_{arg_name}"
     func_params_transition_table[(f"NULL_N_{arg_name}", "u")] = \
@@ -136,46 +146,51 @@ def _build_arg_object_transitions(
         "\"" + arg_name + "\":{"
     )
     args_nb = len(arg_schema)
-    for arg in arg_schema:
-        if arg_schema["type"] == "object":
+    properties = arg_schema["properties"]
+    for arg in properties:
+        json_type = properties[arg].get("type")
+        if json_type == "object":
             state = _build_arg_object_transitions(
                 func_params_transition_table,
-                arg_schema["properties"], arg,
+                properties[arg], arg,
                 state
             )
-        elif arg_schema["type"] == "array":
+        elif json_type == "array":
             state = _build_arg_array_transitions(
                 func_params_transition_table,
-                arg_schema["items"], arg_name,
+                properties[arg], arg,
                 state
             )
-        elif arg_schema["type"] == "string":
+        elif json_type == "string":
             state = _build_arg_string_transitions(
                 func_params_transition_table,
-                arg_schema, arg_name,
+                properties[arg], arg,
                 state
             )
-        elif arg_schema["type"] == "number":
+        elif json_type == "number":
             state = _build_arg_number_transitions(
                 func_params_transition_table,
-                arg_schema, arg_name,
+                properties[arg], arg,
                 state
             )
-        elif arg_schema["type"] == "boolean":
+            func_params_transition_table[(f"NB_DECIMAL_{arg}", "]")] = \
+                f"END_{arg_name}"
+        elif json_type == "boolean":
             state = _build_arg_boolean_transitions(
                 func_params_transition_table,
-                arg_schema, arg_name,
+                properties[arg], arg,
                 state
             )
-        elif arg_schema["type"] == "null":
+        elif json_type == "null":
             state = _build_arg_null_transitions(
                 func_params_transition_table,
-                arg_schema, arg_name,
+                properties[arg], arg,
                 state
             )
         else:
+            print(arg_schema)
             raise TypeError(
-                "This JSON type is not supported."
+                f"`{type}` is not a valid JSON type. "
                 "Supported types: string, number, boolean, null, object, array"
             )
         args_nb -= 1
@@ -195,52 +210,57 @@ def _build_arg_array_transitions(
         func_params_transition_table, state,
         "\"" + arg_name + "\":["
     )
-    if arg_schema["type"] == "string":
+    json_type = arg_schema["items"].get("type")
+    if json_type == "string":
         state = _build_arg_string_transitions(
             func_params_transition_table,
             arg_schema, arg_name,
-            state
+            state, False
         )
         func_params_transition_table[(state, ",")] = f"NEXT_STR_{arg_name}"
         func_params_transition_table[(f"NEXT_STR_{arg_name}", "\"")] = \
             f"STR_{arg_name}"
-    elif arg_schema["type"] == "number":
+    elif json_type == "number":
         state = _build_arg_number_transitions(
             func_params_transition_table,
             arg_schema, arg_name,
-            state
+            state, False
         )
         func_params_transition_table[(state, ",")] = f"NEXT_NB_{arg_name}"
         func_params_transition_table[(f"NEXT_NB_{arg_name}", "-")] = \
             f"NB_{arg_name}"
         func_params_transition_table[(f"NEXT_NB_{arg_name}", "DIGIT")] = \
             f"NB_{arg_name}"
-    elif arg_schema["type"] == "boolean":
+        func_params_transition_table[(f"NB_DECIMAL_{arg_name}", "]")] = \
+            f"END_{arg_name}"
+    elif json_type == "boolean":
         state = _build_arg_boolean_transitions(
             func_params_transition_table,
             arg_schema, arg_name,
-            state
+            state, False
         )
         func_params_transition_table[(state, ",")] = f"NEXT_BOOL_{arg_name}"
         func_params_transition_table[(f"NEXT_BOOL_{arg_name}", "t")] = \
             f"BOOL_T_{arg_name}"
         func_params_transition_table[(f"NEXT_BOOL_{arg_name}", "f")] = \
             f"BOOL_F_{arg_name}"
-    elif arg_schema["type"] == "null":
+    elif json_type == "null":
         state = _build_arg_null_transitions(
             func_params_transition_table,
             arg_schema, arg_name,
-            state
+            state, False
         )
         func_params_transition_table[(state, ",")] = f"NEXT_NULL_{arg_name}"
         func_params_transition_table[(f"NEXT_NULL_{arg_name}", "n")] = \
             f"BOOL_N_{arg_name}"
     else:
         raise TypeError(
-            "This JSON type is not supported."
+            f"`{type}` is not a valid JSON type. "
             "Supported types are: string, number, boolean, null, object, array"
         )
-    func_params_transition_table[(state, "]")] = f"END_{arg_name}"
+    func_params_transition_table[(state, "]")] = f"EXPECT_SEPARATOR_{arg_name}"
+    func_params_transition_table[(f"EXPET_SEPARATOR_{arg_name}", ",")] = \
+        f"END_{arg_name}"
 
 
 ARG_TYPE_TO_BUILDER = {
@@ -258,8 +278,8 @@ def _build_arg_transitions(
         arg_schema: dict, arg_name: str,
         state: str
 ) -> str:
-    type = arg_schema["type"]
-    builder = ARG_TYPE_TO_BUILDER[type]
+    type = arg_schema.get("type", "")
+    builder = ARG_TYPE_TO_BUILDER.get(type, None)
     if not builder:
         raise TypeError(
             "This JSON type is not supported."
@@ -319,4 +339,6 @@ def build_transition_table(func_definitions_path: str) -> dict[str, dict]:
         }
         _build_func_transitions(transition_table, func)
 
+    with open("transition_table.json", "w") as file:
+        pprint.pprint(transition_table, stream=file, indent=4)
     return transition_table
