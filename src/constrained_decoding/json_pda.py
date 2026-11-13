@@ -1,5 +1,3 @@
-
-
 from src.constrained_decoding.pda_transition_builder import (
     build_transition_table
 )
@@ -11,7 +9,7 @@ class JSONPushdownAutomaton:
         self._transition_table: dict[str, dict] = build_transition_table(
             func_definitions_path
         )
-        self._transition_category = self._state
+        self._transition_category: str = self._state
 
     def set_state(self, state: str):
         self._state = state
@@ -25,6 +23,9 @@ class JSONPushdownAutomaton:
     def get_transition_category(self) -> str:
         return self._transition_category
 
+    def get_category_transition_table(self) -> dict:
+        return self._transition_table[self._transition_category]
+
     def transition(self, char: str) -> str:
         input_category = self._get_input_category(char)
         new_state = self._transition_table[self._transition_category].get(
@@ -36,15 +37,14 @@ class JSONPushdownAutomaton:
         return self._state
 
     def _get_input_category(self, char: str) -> str:
-        input_category = char
         if self._is_special_character(char) and "ESC" in self._state:
-            input_category = "SPECIAL_CHAR"
-        elif "NB_" in self._state or "_:" in self._state \
+            return "SPECIAL_CHAR"
+        elif ("NB_" in self._state or self._state.endswith("\":")) \
                 and self._is_digit(char):
-            input_category = "DIGIT"
+            return "DIGIT"
         elif "STR_" in self._state and self._is_character(char):
-            input_category = "CHAR"
-        return input_category
+            return "CHAR"
+        return char
 
     def _is_character(self, char: str) -> bool:
         return ord(char) >= 0x20 and ord(char) != 0x7F and char not in "\"\\"
