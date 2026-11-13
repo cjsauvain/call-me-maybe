@@ -1,0 +1,201 @@
+[
+  {
+    "name": "fn_create_user",
+    "description": "Create a user account from a user object containing a name and an age.",
+    "parameters": {
+      "user": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "age": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "returns": {
+      "type": "string"
+    }
+  },
+  {
+    "name": "fn_sum_list",
+    "description": "Return the sum of all numbers in a list.",
+    "parameters": {
+      "numbers": {
+        "type": "array",
+        "items": {
+          "type": "number"
+        }
+      }
+    },
+    "returns": {
+      "type": "number"
+    }
+  },
+  {
+    "name": "fn_join_words",
+    "description": "Join a list of words with a separator and return the resulting string.",
+    "parameters": {
+      "words": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "separator": {
+        "type": "string"
+      }
+    },
+    "returns": {
+      "type": "string"
+    }
+  },
+  {
+    "name": "fn_count_true",
+    "description": "Count how many values are true in a list of booleans.",
+    "parameters": {
+      "flags": {
+        "type": "array",
+        "items": {
+          "type": "boolean"
+        }
+      }
+    },
+    "returns": {
+      "type": "number"
+    }
+  },
+  {
+    "name": "fn_distance_between_points",
+    "description": "Compute the euclidean distance between two 2D points.",
+    "parameters": {
+      "p1": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "number"
+          },
+          "y": {
+            "type": "number"
+          }
+        }
+      },
+      "p2": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "number"
+          },
+          "y": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "returns": {
+      "type": "number"
+    }
+  },
+  {
+    "name": "fn_send_email",
+    "description": "Send an email to a list of recipients with a subject and delivery options.",
+    "parameters": {
+      "recipients": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "subject": {
+        "type": "string"
+      },
+      "options": {
+        "type": "object",
+        "properties": {
+          "urgent": {
+            "type": "boolean"
+          },
+          "retries": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "returns": {
+      "type": "boolean"
+    }
+  },
+  {
+    "name": "fn_create_order",
+    "description": "Create an order for a customer with a shipping address, a list of products and a shipping mode.",
+    "parameters": {
+      "customer": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "address": {
+            "type": "object",
+            "properties": {
+              "city": {
+                "type": "string"
+              },
+              "zip_code": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      },
+      "products": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "express": {
+        "type": "boolean"
+      }
+    },
+    "returns": {
+      "type": "string"
+    }
+  },
+  {
+    "name": "fn_update_settings",
+    "description": "Update application settings, including display preferences and an optional nickname that can be null.",
+    "parameters": {
+      "settings": {
+        "type": "object",
+        "properties": {
+          "display": {
+            "type": "object",
+            "properties": {
+              "dark_mode": {
+                "type": "boolean"
+              },
+              "font_size": {
+                "type": "number"
+              }
+            }
+          },
+          "nickname": {
+            "type": "null"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "returns": {
+      "type": "boolean"
+    }
+  }
+]
