@@ -1,9 +1,8 @@
-- Validate functions name
-- Validate arguments name
-- Validate value types
 - Verify type hinting everywhere
-- Think about "," at end of argument value (for types number, boolean, null) with args_nb == 1
 - Rename Pushdown Automaton as Finite-State Machine
 - Refactor to eliminate code duplication.
-- Do I create a class for transitions_builder ?
 - Error handling
+- Remove transtion_table.json generation
+- Remove debug prints
+- Remove comments
+- Add docstrings
