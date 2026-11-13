@@ -3,11 +3,43 @@ from textwrap import dedent
 
 from llm_sdk.llm_sdk import Small_LLM_Model
 from src.constrained_decoding.constrained_decoder import ConstrainedDecoder
+from src.file_io import save_llm_output
 from src.function_calling.func_call_input import FuncCallInput
 from src.function_calling.func_definitions import FuncDefinitions
 from src.function_calling.validation import json_input_validation
 from src.parsing.parse_cli import parse_cli
 from src.constrained_decoding.json_pda import JSONPushdownAutomaton
+
+
+EXAMPLE_OUTPUT = [
+    {
+        "prompt": "What is the result of 45 * 21",
+        "name": "fn_mul_numbers",
+        "parameters": {
+            "a": 45,
+            "b": 21
+        }
+    },
+    {
+        "prompt": "Tell a story for a 3 year-old kid",
+        "name": "fn_tell_age_appropriate_story",
+        "parameters": {
+            "age": 3
+        }
+    }
+]
+
+
+def _update_generation_status(
+        len_ignored_indexes, input_count: int,
+        generated_token_count: int, forced_token_count: int):
+    print(
+        f"Generating tokens: {len_ignored_indexes}/{input_count}"
+        " prompts completed",
+        f"| {generated_token_count} tokens generated",
+        f"| {forced_token_count} tokens forced",
+        end="\r"
+    )
 
 
 def _build_prompts_ids(
@@ -16,17 +48,22 @@ def _build_prompts_ids(
     func_definitions: list[FuncDefinitions],
     json_prefixes: list[str]
 ):
-    system_prompt = dedent(f"""
+    tools = json.dumps([f.model_dump() for f in func_definitions])
+    example = json.dumps(EXAMPLE_OUTPUT)
+    system_prompt = dedent("""
         You may call one or more functions to assist with the user query.
         You are provided with function signatures
         within <tools></tools> XML tags:
         <tools>
-        {func_definitions}
+        {tools}
         </tools>
-    """).strip()
+        Your role is to provide the function name and argument(s).
+        Example of output:
+        {example}
+    """).strip().format(tools=tools, example=example)
     formatted_prompts = [
-        f"<|im_start|>system\n{system_prompt}<|im_end|>"
-        f"<|im_start|>user\n{input.prompt}<|im_end>|"
+        f"<|im_start|>system\n{system_prompt}<|im_end|>\n"
+        f"<|im_start|>user\n{input.prompt}<|im_end|>\n"
         "<|im_start|>assistant\n"
         for input in inputs
     ]
@@ -41,7 +78,36 @@ def _build_prompts_ids(
     return current_inputs_ids
 
 
+def _generate_tokens(
+        constrained_decoder: ConstrainedDecoder,
+        model: Small_LLM_Model,
+        current_input_ids: list[int]
+):
+    generated_tokens = ""
+    forced_ids = []
+    if constrained_decoder.pda.get_transition_category() != "FUNC_NAME":
+        generated_tokens = constrained_decoder.retrieve_forced_text()
+        if generated_tokens:
+            forced_ids.extend(model.encode(generated_tokens)[0].tolist())
+            current_input_ids.extend(forced_ids)
+    logits = model.get_logits_from_input_ids(current_input_ids)
+    result = constrained_decoder.decode(logits)
+    if not result:
+        raise RuntimeError(
+            "No valid token found.\n"
+            f"State: {constrained_decoder.pda.get_state()}\n"
+            "Category: "
+            f"{constrained_decoder.pda.get_transition_category()}"
+        )
+    token_id, state = result
+    generated_tokens += constrained_decoder.vocab[token_id]
+    print(generated_tokens, end="", flush=True)
+    current_input_ids.append(token_id)
+    return state, generated_tokens, forced_ids
+
+
 def produce_output(
+    output_path: str,
     model: Small_LLM_Model,
     constrained_decoder: ConstrainedDecoder,
     inputs: list[FuncCallInput],
@@ -49,7 +115,7 @@ def produce_output(
 ):
     input_count = len(inputs)
     json_prefixes = [
-        f"{{\"prompt\":\"{input.prompt}\",\"name\":\""
+        f'{{"prompt":{json.dumps(input.prompt)},"name":"'
         for input in inputs
     ]
     current_inputs_ids = _build_prompts_ids(
@@ -57,28 +123,20 @@ def produce_output(
     )
     input_states = [("", "FUNC_NAME") for _ in range(input_count)]
     indexes_to_ignore = []
-    token_count = 0
+    generated_token_count = 0
+    forced_token_count = 0
     while len(indexes_to_ignore) != len(current_inputs_ids):
         for idx, current_input_ids in enumerate(current_inputs_ids):
             if idx in indexes_to_ignore:
                 continue
-            logits = model.get_logits_from_input_ids(current_input_ids)
             constrained_decoder.pda.set_state(input_states[idx][0])
             constrained_decoder.pda.set_transition_category(
                 input_states[idx][1]
             )
-            candidate_transitions = constrained_decoder.decode(logits)
-            if not candidate_transitions:
-                raise RuntimeError(
-                    "No valid token found.\n"
-                    f"State: {constrained_decoder.pda.get_state()}\n"
-                    "Category: "
-                    f"{constrained_decoder.pda.get_transition_category()}"
-                )
-            max_logit_idx = logits.index(max(logits))
-            current_input_ids.append(max_logit_idx)
-            json_prefixes[idx] += model.decode([max_logit_idx])
-            state = candidate_transitions[max_logit_idx]
+            state, generated_tokens, forced_ids = _generate_tokens(
+                constrained_decoder, model, current_input_ids
+            )
+            json_prefixes[idx] += generated_tokens
             if state == "ACCEPT":
                 indexes_to_ignore.append(idx)
                 json_prefixes[idx] += "}"
@@ -86,20 +144,23 @@ def produce_output(
                 constrained_decoder.pda.set_transition_category(
                     state.removeprefix("ACCEPT_")
                 )
+                parameters_str = ",\"parameters\":{"
+                json_prefixes[idx] += parameters_str
+                current_input_ids.extend(
+                    model.encode(parameters_str)[0].tolist()
+                )
                 state = ""
             input_states[idx] = (
                 state, constrained_decoder.pda.get_transition_category()
             )
-            token_count += 1
-            generation_status = (
-                f"Generating: {len(indexes_to_ignore)}/{input_count}"
-                " prompts completed "
-                f"| {token_count} tokens generated"
-            )
-            print(generation_status, end="\r")
-    llm_func_outputs = "[" + ",".join(json_prefixes) + "]"
-    with open("./data/output.json", "w") as file:
-        json.dump(llm_func_outputs, file, indent=4)
+            generated_token_count += 1
+            forced_token_count += len(forced_ids)
+            # _update_generation_status(
+            #     len(indexes_to_ignore), input_count,
+            #     generated_token_count, forced_token_count
+            # )
+    print()
+    save_llm_output(output_path, json_prefixes)
 
 
 def main() -> None:
@@ -117,13 +178,10 @@ def main() -> None:
         pda=JSONPushdownAutomaton(func_definitions_path)
     )
     produce_output(
-        model, constrained_decoder,
+        args.output, model, constrained_decoder,
         inputs, func_definitions
     )
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as e:
-        print(f"{type(e).__name__}: {e}")
+    main()
