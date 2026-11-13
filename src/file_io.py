@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 from pydantic import TypeAdapter
@@ -19,3 +20,11 @@ def load_func_definitions(path: Path) -> list[FuncDefinitions]:
     ).validate_json(
         path.read_text(encoding='utf-8')
     )
+
+
+def save_llm_output(output_path, llm_outputs: list[str]):
+    print(f"Saving output to {output_path}...")
+    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+    llm_output = json.loads("[" + ",".join(llm_outputs) + "]")
+    with open(output_path, "w") as file:
+        json.dump(llm_output, file, indent=4)
