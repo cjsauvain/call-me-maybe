@@ -1,0 +1,79 @@
+[
+  {
+    "name": "fn_get_time",
+    "description": "Get the current time.",
+    "parameters": {},
+    "returns": {
+      "type": "string"
+    }
+  },
+  {
+    "name": "fn_ping",
+    "description": "Ping the server with empty options.",
+    "parameters": {
+      "options": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    "returns": {
+      "type": "boolean"
+    }
+  },
+  {
+    "name": "fn_create_team",
+    "description": "Create a team from a list of members, each with a name and an age.",
+    "parameters": {
+      "team_name": {
+        "type": "string"
+      },
+      "members": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "age": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    },
+    "returns": {
+      "type": "string"
+    }
+  },
+  {
+    "name": "fn_matrix_sum",
+    "description": "Return the sum of all numbers in a matrix.",
+    "parameters": {
+      "matrix": {
+        "type": "array",
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "returns": {
+      "type": "number"
+    }
+  },
+  {
+    "name": "fn_set_config",
+    "description": "Set a configuration entry whose key contains a dot.",
+    "parameters": {
+      "file.name": {
+        "type": "string"
+      }
+    },
+    "returns": {
+      "type": "boolean"
+    }
+  }
+]

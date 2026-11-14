@@ -1,0 +1,686 @@
+[
+  {
+    "name": "fn_add_numbers",
+    "description": "Add two numbers together and return their sum.",
+    "parameters": {
+      "a": {
+        "type": "number"
+      },
+      "b": {
+        "type": "number"
+      }
+    },
+    "returns": {
+      "type": "number"
+    }
+  },
+  {
+    "name": "fn_greet",
+    "description": "Generate a greeting message for a person by name.",
+    "parameters": {
+      "name": {
+        "type": "string"
+      }
+    },
+    "returns": {
+      "type": "string"
+    }
+  },
+  {
+    "name": "fn_reverse_string",
+    "description": "Reverse a string and return the reversed result.",
+    "parameters": {
+      "s": {
+        "type": "string"
+      }
+    },
+    "returns": {
+      "type": "string"
+    }
+  },
+  {
+    "name": "fn_substitute_string_with_regex",
+    "description": "Replace all occurrences matching a regex pattern in a string.",
+    "parameters": {
+      "source_string": {
+        "type": "string"
+      },
+      "regex": {
+        "type": "string"
+      },
+      "replacement": {
+        "type": "string"
+      }
+    },
+    "returns": {
+      "type": "string"
+    }
+  },
+  {
+    "name": "fn_is_even",
+    "description": "Check whether a number is even.",
+    "parameters": {
+      "n": {
+        "type": "number"
+      }
+    },
+    "returns": {
+      "type": "boolean"
+    }
+  },
+  {
+    "name": "fn_set_notifications",
+    "description": "Enable or disable notifications.",
+    "parameters": {
+      "enabled": {
+        "type": "boolean"
+      }
+    },
+    "returns": {
+      "type": "boolean"
+    }
+  },
+  {
+    "name": "fn_reset_value",
+    "description": "Reset a stored value by setting it to null.",
+    "parameters": {
+      "value": {
+        "type": "null"
+      }
+    },
+    "returns": {
+      "type": "boolean"
+    }
+  },
+  {
+    "name": "fn_format_price",
+    "description": "Format a price with a currency, optionally including the currency symbol.",
+    "parameters": {
+      "amount": {
+        "type": "number"
+      },
+      "currency": {
+        "type": "string"
+      },
+      "include_symbol": {
+        "type": "boolean"
+      }
+    },
+    "returns": {
+      "type": "string"
+    }
+  },
+  {
+    "name": "fn_get_weather",
+    "description": "Get the current weather for a city.",
+    "parameters": {
+      "city": {
+        "type": "string"
+      }
+    },
+    "returns": {
+      "type": "string"
+    }
+  },
+  {
+    "name": "fn_get_weather_forecast",
+    "description": "Get the weather forecast for a city for a number of days.",
+    "parameters": {
+      "city": {
+        "type": "string"
+      },
+      "days": {
+        "type": "number"
+      }
+    },
+    "returns": {
+      "type": "string"
+    }
+  },
+  {
+    "name": "fn_compare_values",
+    "description": "Compare two values and return the largest one.",
+    "parameters": {
+      "value1": {
+        "type": "number"
+      },
+      "value2": {
+        "type": "number"
+      }
+    },
+    "returns": {
+      "type": "number"
+    }
+  },
+  {
+    "name": "fn_set_description",
+    "description": "Set the description of a product.",
+    "parameters": {
+      "DESCRIPTION": {
+        "type": "string"
+      }
+    },
+    "returns": {
+      "type": "boolean"
+    }
+  },
+  {
+    "name": "fn_create_user",
+    "description": "Create a user account from a user object containing a name and an age.",
+    "parameters": {
+      "user": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "age": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "returns": {
+      "type": "string"
+    }
+  },
+  {
+    "name": "fn_sum_list",
+    "description": "Return the sum of all numbers in a list.",
+    "parameters": {
+      "numbers": {
+        "type": "array",
+        "items": {
+          "type": "number"
+        }
+      }
+    },
+    "returns": {
+      "type": "number"
+    }
+  },
+  {
+    "name": "fn_join_words",
+    "description": "Join a list of words with a separator and return the resulting string.",
+    "parameters": {
+      "words": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "separator": {
+        "type": "string"
+      }
+    },
+    "returns": {
+      "type": "string"
+    }
+  },
+  {
+    "name": "fn_count_true",
+    "description": "Count how many values are true in a list of booleans.",
+    "parameters": {
+      "flags": {
+        "type": "array",
+        "items": {
+          "type": "boolean"
+        }
+      }
+    },
+    "returns": {
+      "type": "number"
+    }
+  },
+  {
+    "name": "fn_distance_between_points",
+    "description": "Compute the euclidean distance between two 2D points.",
+    "parameters": {
+      "p1": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "number"
+          },
+          "y": {
+            "type": "number"
+          }
+        }
+      },
+      "p2": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "number"
+          },
+          "y": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "returns": {
+      "type": "number"
+    }
+  },
+  {
+    "name": "fn_send_email",
+    "description": "Send an email to a list of recipients with a subject and delivery options.",
+    "parameters": {
+      "recipients": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "subject": {
+        "type": "string"
+      },
+      "options": {
+        "type": "object",
+        "properties": {
+          "urgent": {
+            "type": "boolean"
+          },
+          "retries": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "returns": {
+      "type": "boolean"
+    }
+  },
+  {
+    "name": "fn_create_order",
+    "description": "Create an order for a customer with a shipping address, a list of products and a shipping mode.",
+    "parameters": {
+      "customer": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "address": {
+            "type": "object",
+            "properties": {
+              "city": {
+                "type": "string"
+              },
+              "zip_code": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      },
+      "products": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "express": {
+        "type": "boolean"
+      }
+    },
+    "returns": {
+      "type": "string"
+    }
+  },
+  {
+    "name": "fn_update_settings",
+    "description": "Update application settings, including display preferences and an optional nickname that can be null.",
+    "parameters": {
+      "settings": {
+        "type": "object",
+        "properties": {
+          "display": {
+            "type": "object",
+            "properties": {
+              "dark_mode": {
+                "type": "boolean"
+              },
+              "font_size": {
+                "type": "number"
+              }
+            }
+          },
+          "nickname": {
+            "type": "null"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "returns": {
+      "type": "boolean"
+    }
+  },
+  {
+    "name": "fn_register_company",
+    "description": "Register a company with its name and location, including a full address.",
+    "parameters": {
+      "company": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "location": {
+            "type": "object",
+            "properties": {
+              "country": {
+                "type": "string"
+              },
+              "address": {
+                "type": "object",
+                "properties": {
+                  "street": {
+                    "type": "string"
+                  },
+                  "city": {
+                    "type": "string"
+                  },
+                  "zip_code": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "returns": {
+      "type": "string"
+    }
+  },
+  {
+    "name": "fn_transfer_money",
+    "description": "Transfer an amount of money from a sender account to a receiver account.",
+    "parameters": {
+      "sender": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "account": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "number"
+              },
+              "currency": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "receiver": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "account": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "number"
+              },
+              "currency": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "amount": {
+        "type": "number"
+      }
+    },
+    "returns": {
+      "type": "boolean"
+    }
+  },
+  {
+    "name": "fn_create_profile",
+    "description": "Create a user profile with a username, an age, a verification flag, an empty bio and a list of scores.",
+    "parameters": {
+      "profile": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "age": {
+            "type": "number"
+          },
+          "verified": {
+            "type": "boolean"
+          },
+          "bio": {
+            "type": "null"
+          },
+          "scores": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    },
+    "returns": {
+      "type": "string"
+    }
+  },
+  {
+    "name": "fn_set_theme",
+    "description": "Set the application theme color.",
+    "parameters": {
+      "theme": {
+        "type": "object",
+        "properties": {
+          "color": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "returns": {
+      "type": "boolean"
+    }
+  },
+  {
+    "name": "fn_compute_stats",
+    "description": "Compute statistics on a list of values with a given precision.",
+    "parameters": {
+      "data": {
+        "type": "object",
+        "properties": {
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "precision": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "returns": {
+      "type": "number"
+    }
+  },
+  {
+    "name": "fn_count_nulls",
+    "description": "Count the number of null values in a list.",
+    "parameters": {
+      "values": {
+        "type": "array",
+        "items": {
+          "type": "null"
+        }
+      }
+    },
+    "returns": {
+      "type": "number"
+    }
+  },
+  {
+    "name": "fn_wrap_data",
+    "description": "Wrap a piece of data inside a data envelope.",
+    "parameters": {
+      "data": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "returns": {
+      "type": "string"
+    }
+  },
+  {
+    "name": "fn_set_range",
+    "description": "Define a numeric range with a minimum, a maximum and whether the minimum is inclusive.",
+    "parameters": {
+      "range": {
+        "type": "object",
+        "properties": {
+          "min": {
+            "type": "number"
+          },
+          "max": {
+            "type": "number"
+          },
+          "min_inclusive": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "returns": {
+      "type": "boolean"
+    }
+  },
+  {
+    "name": "fn_schedule_meeting",
+    "description": "Schedule a meeting with a title, a list of attendees, a time slot and reminder options.",
+    "parameters": {
+      "title": {
+        "type": "string"
+      },
+      "attendees": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "slot": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "object",
+            "properties": {
+              "hour": {
+                "type": "number"
+              },
+              "minute": {
+                "type": "number"
+              }
+            }
+          },
+          "end": {
+            "type": "object",
+            "properties": {
+              "hour": {
+                "type": "number"
+              },
+              "minute": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      },
+      "reminder": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "minutes_before": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "returns": {
+      "type": "boolean"
+    }
+  },
+  {
+    "name": "fn_configure_server",
+    "description": "Configure a server with its network settings, feature flags and allowed ports.",
+    "parameters": {
+      "server": {
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string"
+          },
+          "network": {
+            "type": "object",
+            "properties": {
+              "port": {
+                "type": "number"
+              },
+              "secure": {
+                "type": "boolean"
+              },
+              "proxy": {
+                "type": "null"
+              }
+            }
+          },
+          "features": {
+            "type": "object",
+            "properties": {
+              "logging": {
+                "type": "boolean"
+              },
+              "debug": {
+                "type": "boolean"
+              }
+            }
+          },
+          "allowed_ports": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    },
+    "returns": {
+      "type": "boolean"
+    }
+  }
+]
