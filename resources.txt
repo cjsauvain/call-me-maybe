@@ -31,5 +31,6 @@ Automata:
         -> Finite-State Machine
 JSON Schema:
     - https://json-schema.org/understanding-json-schema/reference/type?utm_source=chatgpt.com
+    - https://json-schema.org/understanding-json-schema/reference/numeric
 LLMs:
     - For specific questions and a deeper understanding of topics.
