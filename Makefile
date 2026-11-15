@@ -4,10 +4,10 @@ install:
 	uv sync
 
 run:
-	uv run --env-file .env call-me-maybe
+	uv run python -m src
 
 help:
-	uv run call-me-maybe -h
+	uv run python -m src -h
 
 debug:
 	uv run python -m pdb .venv/bin/call-me-maybe
@@ -15,6 +15,7 @@ debug:
 clean:
 	find . -type d -name __pycache__ -exec rm -rf {} +
 	find . -type d -name .pytest_cache -exec rm -rf {} +
+	rm -rf .mypy_cache
 
 lint:
 	flake8
