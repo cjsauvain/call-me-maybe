@@ -165,57 +165,14 @@ def _build_arg_array_transitions(
     items = arg_schema.items
     if items is None:
         raise ValueError(f"Array parameter {path} has no items.")
-    items_type = items.type
-    if items_type == "string":
-        state = _build_arg_string_transitions(
-            transition_table,
-            items, path, state
-        )
-        transition_table[(state, ",")] = f"NEXT_STR_{path}"
-        transition_table[(f"NEXT_STR_{path}", "\"")] = f"STR_{path}"
-    elif items_type == "integer":
-        state = _build_arg_integer_transitions(
-            transition_table,
-            items, path, state
-        )
-        transition_table[(state, ",")] = f"NEXT_NB_{path}"
-        transition_table[(f"NEXT_NB_{path}", "-")] = f"WAIT_NB_{path}"
-        transition_table[(f"NEXT_NB_{path}", "DIGIT")] = f"NB_{path}"
-        transition_table[(f"WAIT_NB_{path}", "DIGIT")] = f"NB_{path}"
-    elif items_type == "number":
-        state = _build_arg_number_transitions(
-            transition_table,
-            items, path, state
-        )
-        transition_table[(state, ",")] = f"NEXT_NB_{path}"
-        transition_table[(f"NEXT_NB_{path}", "-")] = f"WAIT_NB_{path}"
-        transition_table[(f"NEXT_NB_{path}", "DIGIT")] = f"NB_{path}"
-        transition_table[(f"WAIT_NB_{path}", "DIGIT")] = f"NB_{path}"
-    elif items_type == "boolean":
-        state = _build_arg_boolean_transitions(
-            transition_table,
-            items, path, state
-        )
-        transition_table[(state, ",")] = f"NEXT_BOOL_{path}"
-        transition_table[(f"NEXT_BOOL_{path}", "t")] = f"BOOL_T_{path}"
-        transition_table[(f"NEXT_BOOL_{path}", "f")] = f"BOOL_F_{path}"
-    elif items_type == "null":
-        state = _build_arg_null_transitions(
-            transition_table,
-            items, path, state
-        )
-        transition_table[(state, ",")] = f"NEXT_NULL_{path}"
-        transition_table[(f"NEXT_NULL_{path}", "n")] = f"NULL_N_{path}"
-    else:
-        raise TypeError(
-            f"`{items_type}` is not a valid JSON type. "
-            "Supported types are: string, integer, number,"
-            " boolean, null, object, array."
-        )
-    next_state = f"ARR_END_{path}"
-    transition_table[(state, "]")] = next_state
+    next_state = f"NEXT_{path}"
+    end_state = f"ARR_END_{path}"
+    state = _build_arg_transitions(transition_table, items, f"{path}[]", state)
+    _build_arg_transitions(transition_table, items, f"{path}[]", next_state)
+    transition_table[(state, ",")] = next_state
+    transition_table[(state, "]")] = end_state
 
-    return next_state
+    return end_state
 
 
 ARG_TYPE_TO_BUILDER: dict[
