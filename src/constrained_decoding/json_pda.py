@@ -7,11 +7,16 @@ from src.constrained_decoding.pda_transition_builder import (
 class JSONPushdownAutomaton:
     def __init__(self, func_definitions_path: str):
         self._state: str = ""
-        self._transition_table: dict[tuple[str, str], str] = \
+        self._transition_table: dict[tuple[str, str], str]
+        self._func_name_states: set[str]
+        self._transition_table, self._func_name_states = \
             build_transition_table(func_definitions_path)
         self._outgoing_transitions = build_outgoing_transitions(
             self._transition_table
         )
+
+    def is_in_func_name(self, state) -> bool:
+        return state in self._func_name_states
 
     def set_state(self, state: str):
         self._state = state

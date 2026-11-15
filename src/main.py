@@ -129,16 +129,19 @@ def _generate_tokens(
         current_input_ids: list[int]
 ) -> tuple[str, str, int]:
     forced_ids = []
-    generated_tokens = constrained_decoder.retrieve_forced_text()
-    if generated_tokens:
-        forced_ids.extend(model.encode(generated_tokens)[0].tolist())
-        current_input_ids.extend(forced_ids)
+    generated_tokens = ""
+    state = constrained_decoder.pda.get_state()
+    if not constrained_decoder.pda.is_in_func_name(state):
+        generated_tokens = constrained_decoder.retrieve_forced_text()
+        if generated_tokens:
+            forced_ids.extend(model.encode(generated_tokens)[0].tolist())
+            current_input_ids.extend(forced_ids)
     logits = model.get_logits_from_input_ids(current_input_ids)
     result = constrained_decoder.decode(logits)
     if not result:
         raise RuntimeError(
             "No valid token found.\n"
-            f"State: {constrained_decoder.pda.get_state()}\n"
+            f"State: {state}\n"
         )
     token_id, state = result
     generated_tokens += constrained_decoder.vocab[token_id]

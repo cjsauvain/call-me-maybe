@@ -13,9 +13,11 @@ def _add_new_entry(
 
 def _build_func_name_transitions(
     transition_table: dict[tuple[str, str], str],
+    func_name_states: set[str],
     func_name: str
-):
+) -> str:
     state = ""
+    func_name_states.add(state)
     for char in func_name:
         if not transition_table.get((state, char)):
             state = _add_new_entry(
@@ -24,6 +26,7 @@ def _build_func_name_transitions(
             )
         else:
             state = transition_table[(state, char)]
+        func_name_states.add(state)
     for char in '","parameters":{':
         new_state = state + char
         transition_table[(state, char)] = new_state
@@ -337,9 +340,12 @@ def _build_func_params_transitions(
 
 def _build_func_transitions(
     transition_table: dict[tuple[str, str], str],
+    func_name_states: set[str],
     func: dict
 ):
-    state = _build_func_name_transitions(transition_table, func["name"])
+    state = _build_func_name_transitions(
+        transition_table, func_name_states, func["name"]
+    )
     _build_func_params_transitions(
         transition_table,
         func["parameters"],
@@ -350,20 +356,21 @@ def _build_func_transitions(
 
 def build_transition_table(
     func_definitions_path: str
-) -> dict[tuple[str, str], str]:
+) -> tuple[dict[tuple[str, str], str], set[str]]:
     with open(func_definitions_path, "r") as file:
         func_definitions_json = json.load(file)
 
     transition_table: dict[tuple[str, str], str] = {}
+    func_name_states: set[str] = set()
     for func_definition in func_definitions_json:
         func = {
             "name": func_definition["name"],
             "parameters": func_definition["parameters"]
         }
-        _build_func_transitions(transition_table, func)
+        _build_func_transitions(transition_table, func_name_states, func)
     with open("transition_table.json", "w") as file:
         pprint.pprint(transition_table, stream=file, indent=4)
-    return transition_table
+    return transition_table, func_name_states
 
 
 def build_outgoing_transitions(
