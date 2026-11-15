@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import json
-from sys import stderr
+import sys
 from textwrap import dedent
 
 from llm_sdk.llm_sdk import Small_LLM_Model
@@ -38,7 +38,7 @@ class GenerationState:
     state: str = ""
     generated_token_count: int = 0
     forced_token_count: int = 0
-    failed: bool = False
+    error: str = ""
 
 
 def _look_for_generation_errors(
@@ -47,11 +47,11 @@ def _look_for_generation_errors(
     inputs: list[FuncCallInput]
 ) -> None:
     for idx in range(len(json_prefixes)):
-        if generation_states[idx].failed:
-            print(f"Generation error:\n{json_prefixes[idx]}", file=stderr)
+        if generation_states[idx].error:
+            print(f"Generation error:\n{json_prefixes[idx]}", file=sys.stderr)
             error_dict = {
                 "prompt": inputs[idx].prompt,
-                "error": "max tokens reached"
+                "error": generation_states[idx].error
             }
             json_prefixes[idx] = json.dumps(error_dict)
 
@@ -139,10 +139,7 @@ def _generate_tokens(
     logits = model.get_logits_from_input_ids(current_input_ids)
     result = constrained_decoder.decode(logits)
     if not result:
-        raise RuntimeError(
-            "No valid token found.\n"
-            f"State: {state}\n"
-        )
+        raise RuntimeError(f"No valid token found. State: `{state}`")
     token_id, state = result
     generated_tokens += constrained_decoder.vocab[token_id]
     current_input_ids.append(token_id)
@@ -173,13 +170,18 @@ def produce_output(
             if generation_states[idx].generated_token_count \
                     >= MAX_GENERATED_TOKENS:
                 indexes_to_ignore.append(idx)
-                generation_states[idx].failed = True
+                generation_states[idx].error = "max tokens reached"
                 continue
             constrained_decoder.fsm.set_state(generation_states[idx].state)
-            state, generated_tokens, len_forced_ids = _generate_tokens(
-                constrained_decoder, model,
-                current_input_ids
-            )
+            try:
+                state, generated_tokens, len_forced_ids = _generate_tokens(
+                    constrained_decoder, model,
+                    current_input_ids
+                )
+            except RuntimeError as e:
+                indexes_to_ignore.append(idx)
+                generation_states[idx].error = str(e)
+                continue
             json_prefixes[idx] += generated_tokens
             if state == "ACCEPT":
                 indexes_to_ignore.append(idx)
@@ -197,20 +199,29 @@ def produce_output(
 
 
 def main() -> None:
-    args = parse_cli()
+    try:
+        args = parse_cli()
 
-    inputs, func_definitions = json_input_validation(
-        args.input, args.function_definitions
-    )
-    model = Small_LLM_Model()
-    constrained_decoder = ConstrainedDecoder(
-        model,
-        fsm=JSONSchemaFSM(func_definitions)
-    )
-    produce_output(
-        args.output, model, constrained_decoder,
-        inputs, func_definitions
-    )
+        inputs, func_definitions = json_input_validation(
+            args.input, args.function_definitions
+        )
+        model = Small_LLM_Model()
+        constrained_decoder = ConstrainedDecoder(
+            model,
+            fsm=JSONSchemaFSM(func_definitions)
+        )
+        produce_output(
+            args.output, model, constrained_decoder,
+            inputs, func_definitions
+        )
+    except KeyboardInterrupt:
+        print()
+        print("Exiting generation process...", file=sys.stderr)
+        sys.exit(130)
+    except Exception as e:
+        print()
+        print(f"{type(e).__name__}: {e}", file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
