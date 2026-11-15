@@ -1,5 +1,4 @@
 import json
-import pprint
 from typing import Callable
 
 ArgBuilderType = Callable[
@@ -375,8 +374,6 @@ def build_transition_table(
             "parameters": func_definition["parameters"]
         }
         _build_func_transitions(transition_table, func_name_states, func)
-    with open("transition_table.json", "w") as file:
-        pprint.pprint(transition_table, stream=file, indent=4)
     return transition_table, func_name_states
 
 
