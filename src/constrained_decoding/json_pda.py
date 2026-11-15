@@ -37,12 +37,18 @@ class JSONPushdownAutomaton:
         return self._state
 
     def _get_input_category(self, char: str) -> str:
-        if self._is_special_character(char) and "ESC" in self._state:
+        category_transitions = self._transition_table[
+            self._transition_category
+        ]
+        state = self._state
+        if self._is_special_character(char) \
+                and category_transitions.get((state, "SPECIAL_CHAR")):
             return "SPECIAL_CHAR"
-        elif ("NB_" in self._state or self._state.endswith("\":")) \
-                and self._is_digit(char):
+        elif self._is_digit(char) \
+                and category_transitions.get((state, "DIGIT")):
             return "DIGIT"
-        elif "STR_" in self._state and self._is_character(char):
+        elif self._is_character(char) \
+                and category_transitions.get((state, "CHAR")):
             return "CHAR"
         return char
 
@@ -53,4 +59,4 @@ class JSONPushdownAutomaton:
         return char in '"\\/bfnrt'
 
     def _is_digit(self, char: str) -> bool:
-        return char.isdigit()
+        return ord(char) >= 0x30 and ord(char) <= 0x39
