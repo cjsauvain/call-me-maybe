@@ -1,5 +1,11 @@
 from pydantic import BaseModel, ConfigDict, model_validator
-from src.function_calling.param_types import ParamTypeName
+from typing import Literal
+
+
+type ParamTypeName = Literal[
+    "string", "integer", "number", "boolean",
+    "null", "array", "object"
+]
 
 
 class ParamModel(BaseModel):
