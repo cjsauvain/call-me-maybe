@@ -18,6 +18,21 @@ def _add_new_entry(
     return new_state
 
 
+def _build_key_transitions(
+        transition_table: dict[tuple[str, str], str],
+        state: str, key: str,
+        visited_states: set[str] | None = None
+) -> str:
+    for char in key:
+        if not transition_table.get((state, char)):
+            state = _add_new_entry(transition_table, state, char)
+        else:
+            state = transition_table[(state, char)]
+        if visited_states is not None:
+            visited_states.add(state)
+    return state
+
+
 def _build_func_name_transitions(
     transition_table: dict[tuple[str, str], str],
     func_name_states: set[str],
@@ -25,28 +40,14 @@ def _build_func_name_transitions(
 ) -> str:
     state = ""
     func_name_states.add(state)
-    for char in func_name:
-        if not transition_table.get((state, char)):
-            state = _add_new_entry(transition_table, state, char)
-        else:
-            state = transition_table[(state, char)]
-        func_name_states.add(state)
-    for char in '","parameters":{':
-        new_state = state + char
-        transition_table[(state, char)] = new_state
-        state = new_state
-    return state
-
-
-def _build_key_transitions(
-        transition_table: dict[tuple[str, str], str],
-        state: str, key: str
-) -> str:
-    for char in key:
-        if not transition_table.get((state, char)):
-            state = _add_new_entry(transition_table, state, char)
-        else:
-            state = transition_table[(state, char)]
+    state = _build_key_transitions(
+        transition_table, state,
+        func_name, func_name_states
+    )
+    state = _build_key_transitions(
+        transition_table, state,
+        '","parameters":{'
+    )
     return state
 
 
