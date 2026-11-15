@@ -1,4 +1,7 @@
+TODO:
 - Recoding the BPE algorithm from scratch (x2)
-- Performance optimization: caching|batching (x2)
-- Demonstration of constrained decoding integration with encoding/decoding
+- Performance optimization: caching
+- Performance optimization: batching
+
+DONE:
 - Support for complex nested function arguments
