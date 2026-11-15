@@ -5,50 +5,36 @@ from src.constrained_decoding.pda_transition_builder import (
 
 class JSONPushdownAutomaton:
     def __init__(self, func_definitions_path: str):
-        self._state: str = "FUNC_NAME"
-        self._transition_table: dict[str, dict] = build_transition_table(
-            func_definitions_path
-        )
-        self._transition_category: str = self._state
+        self._state: str = ""
+        self._transition_table: dict[tuple[str, str], str] = \
+            build_transition_table(func_definitions_path)
 
     def set_state(self, state: str):
         self._state = state
 
     def get_state(self) -> str:
         return self._state
-
-    def set_transition_category(self, category: str):
-        self._transition_category = category
-
-    def get_transition_category(self) -> str:
-        return self._transition_category
-
-    def get_category_transition_table(self) -> dict:
-        return self._transition_table[self._transition_category]
+    
+    def get_transition_table(self) -> dict[tuple[str, str], str]:
+        return self._transition_table
 
     def transition(self, char: str) -> str:
         input_category = self._get_input_category(char)
-        new_state = self._transition_table[self._transition_category].get(
-            (self._state, input_category)
-        )
+        new_state = self._transition_table.get((self._state, input_category))
         if new_state is None:
             return "error"
         self._state = new_state
         return self._state
 
     def _get_input_category(self, char: str) -> str:
-        category_transitions = self._transition_table[
-            self._transition_category
-        ]
-        state = self._state
         if self._is_special_character(char) \
-                and category_transitions.get((state, "SPECIAL_CHAR")):
+                and self._transition_table.get((self._state, "SPECIAL_CHAR")):
             return "SPECIAL_CHAR"
         elif self._is_digit(char) \
-                and category_transitions.get((state, "DIGIT")):
+                and self._transition_table.get((self._state, "DIGIT")):
             return "DIGIT"
         elif self._is_character(char) \
-                and category_transitions.get((state, "CHAR")):
+                and self._transition_table.get((self._state, "CHAR")):
             return "CHAR"
         return char
 

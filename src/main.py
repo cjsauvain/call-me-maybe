@@ -36,10 +36,24 @@ MAX_GENERATED_TOKENS = 200
 @dataclass
 class GenerationState:
     state: str = ""
-    category: str = "FUNC_NAME"
     generated_token_count: int = 0
     forced_token_count: int = 0
     failed: bool = False
+
+
+def _look_for_generation_errors(
+    json_prefixes: list[str],
+    generation_states: list[GenerationState],
+    inputs: list[FuncCallInput]
+):
+    for idx in range(len(json_prefixes)):
+        if generation_states[idx].failed:
+            print(f"Generation error:\n{json_prefixes[idx]}", file=stderr)
+            error_dict = {
+                "prompt": inputs[idx].prompt,
+                "error": "max tokens reached"
+            }
+            json_prefixes[idx] = json.dumps(error_dict)
 
 
 def _update_generation_status(
@@ -66,11 +80,9 @@ def _update_generation_status(
 
 
 def _save_prompt_generation_state(
-    generation_state: GenerationState, state: str,
-    category: str, len_force_ids: int
+    generation_state: GenerationState, state: str, len_force_ids: int
 ):
     generation_state.state = state
-    generation_state.category = category
     generation_state.generated_token_count += 1
     generation_state.forced_token_count += len_force_ids
 
@@ -116,21 +128,17 @@ def _generate_tokens(
         model: Small_LLM_Model,
         current_input_ids: list[int]
 ) -> tuple[str, str, int]:
-    generated_tokens = ""
     forced_ids = []
-    if constrained_decoder.pda.get_transition_category() != "FUNC_NAME":
-        generated_tokens = constrained_decoder.retrieve_forced_text()
-        if generated_tokens:
-            forced_ids.extend(model.encode(generated_tokens)[0].tolist())
-            current_input_ids.extend(forced_ids)
+    generated_tokens = constrained_decoder.retrieve_forced_text()
+    if generated_tokens:
+        forced_ids.extend(model.encode(generated_tokens)[0].tolist())
+        current_input_ids.extend(forced_ids)
     logits = model.get_logits_from_input_ids(current_input_ids)
     result = constrained_decoder.decode(logits)
     if not result:
         raise RuntimeError(
             "No valid token found.\n"
             f"State: {constrained_decoder.pda.get_state()}\n"
-            "Category: "
-            f"{constrained_decoder.pda.get_transition_category()}"
         )
     token_id, state = result
     generated_tokens += constrained_decoder.vocab[token_id]
@@ -165,29 +173,15 @@ def produce_output(
                 generation_states[idx].failed = True
                 continue
             constrained_decoder.pda.set_state(generation_states[idx].state)
-            constrained_decoder.pda.set_transition_category(
-                generation_states[idx].category
-            )
             state, generated_tokens, len_forced_ids = _generate_tokens(
-                constrained_decoder, model, current_input_ids
+                constrained_decoder, model,
+                current_input_ids
             )
             json_prefixes[idx] += generated_tokens
             if state == "ACCEPT":
                 indexes_to_ignore.append(idx)
-                json_prefixes[idx] += "}"
-            elif "ACCEPT_" in state:
-                constrained_decoder.pda.set_transition_category(
-                    state.removeprefix("ACCEPT_")
-                )
-                parameters_str = ",\"parameters\":{"
-                json_prefixes[idx] += parameters_str
-                current_input_ids.extend(
-                    model.encode(parameters_str)[0].tolist()
-                )
-                state = ""
             _save_prompt_generation_state(
                 generation_states[idx], state,
-                constrained_decoder.pda.get_transition_category(),
                 len_forced_ids
             )
             _update_generation_status(
@@ -195,14 +189,7 @@ def produce_output(
                 generation_states
             )
     print()
-    for idx in range(len(json_prefixes)):
-        if generation_states[idx].failed:
-            print(f"Generation error:\n{json_prefixes[idx]}", file=stderr)
-            error_dict = {
-                "prompt": inputs[idx].prompt,
-                "error": "max tokens reached"
-            }
-            json_prefixes[idx] = json.dumps(error_dict)
+    _look_for_generation_errors(json_prefixes, generation_states, inputs)
     save_llm_output(output_path, json_prefixes)
 
 

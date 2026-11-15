@@ -36,14 +36,13 @@ class ConstrainedDecoder:
     def _get_forced_transition(
             self, current_state: str
     ) -> tuple[bool, str, str]:
-        category_transition_table = \
-            self.pda.get_category_transition_table()
+        transition_table = self.pda.get_transition_table()
         count = 0
         input_category_tmp = ""
         next_state_tmp = current_state
         for (
             (state, input_category), next_state
-         ) in category_transition_table.items():
+         ) in transition_table.items():
             if count > 1:
                 return False, "", ""
             if state == current_state:
@@ -62,7 +61,7 @@ class ConstrainedDecoder:
                 break
             if input_category in GENERIC_INPUTS:
                 break
-            if next_state.startswith("ACCEPT"):
+            if next_state == "ACCEPT":
                 break
             self.pda.set_state(next_state)
             forced_text += input_category
