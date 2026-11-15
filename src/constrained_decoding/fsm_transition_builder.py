@@ -4,7 +4,7 @@ from src.function_calling.func_definitions import FuncDefinitions, ParamModel
 
 
 ArgBuilderType = Callable[
-    [dict[tuple[str, str], str], ParamModel, str, str, bool],
+    [dict[tuple[str, str], str], ParamModel, str, str],
     str
 ]
 
@@ -50,17 +50,20 @@ def _build_key_transitions(
     return state
 
 
+def _build_key(
+    transition_table: dict[tuple[str, str], str],
+    state: str, key_name: str
+) -> str:
+    return _build_key_transitions(
+        transition_table, state,
+        "\"" + key_name + "\":"
+    )
+
+
 def _build_arg_string_transitions(
         transition_table: dict[tuple[str, str], str],
-        _: ParamModel, path: str, state: str,
-        add_key: bool = True
+        _: ParamModel, path: str, state: str
 ) -> str:
-    if add_key:
-        key_name = path.split(".")[-1]
-        state = _build_key_transitions(
-            transition_table, state,
-            "\"" + key_name + "\":"
-        )
     transition_table[(state, "\"")] = f"STR_{path}"
     transition_table[(f"STR_{path}", "\\")] = f"ESC_{path}"
     transition_table[(f"STR_{path}", "CHAR")] = f"STR_{path}"
@@ -72,15 +75,8 @@ def _build_arg_string_transitions(
 
 def _build_arg_integer_transitions(
         transition_table: dict[tuple[str, str], str],
-        _: ParamModel, path: str, state: str,
-        add_key: bool = True
+        _: ParamModel, path: str, state: str
 ) -> str:
-    if add_key:
-        key_name = path.split(".")[-1]
-        state = _build_key_transitions(
-            transition_table, state,
-            "\"" + key_name + "\":"
-        )
     transition_table[(state, "-")] = f"WAIT_NB_{path}"
     transition_table[(state, "DIGIT")] = f"NB_{path}"
     transition_table[(f"WAIT_NB_{path}", "DIGIT")] = f"NB_{path}"
@@ -91,15 +87,8 @@ def _build_arg_integer_transitions(
 
 def _build_arg_number_transitions(
         transition_table: dict[tuple[str, str], str],
-        _: ParamModel, path: str, state: str,
-        add_key: bool = True
+        _: ParamModel, path: str, state: str
 ) -> str:
-    if add_key:
-        key_name = path.split(".")[-1]
-        state = _build_key_transitions(
-            transition_table, state,
-            "\"" + key_name + "\":"
-        )
     transition_table[(state, "-")] = f"WAIT_NB_{path}"
     transition_table[(state, "DIGIT")] = f"NB_{path}"
     transition_table[(f"WAIT_NB_{path}", "DIGIT")] = f"NB_{path}"
@@ -114,15 +103,8 @@ def _build_arg_number_transitions(
 
 def _build_arg_boolean_transitions(
         transition_table: dict[tuple[str, str], str],
-        _: ParamModel, path: str, state: str,
-        add_key: bool = True
+        _: ParamModel, path: str, state: str
 ) -> str:
-    if add_key:
-        key_name = path.split(".")[-1]
-        state = _build_key_transitions(
-            transition_table, state,
-            "\"" + key_name + "\":"
-        )
     transition_table[(state, "t")] = f"BOOL_T_{path}"
     transition_table[(f"BOOL_T_{path}", "r")] = f"BOOL_R_{path}"
     transition_table[(f"BOOL_R_{path}", "u")] = f"BOOL_U_{path}"
@@ -138,15 +120,8 @@ def _build_arg_boolean_transitions(
 
 def _build_arg_null_transitions(
         transition_table: dict[tuple[str, str], str],
-        _: ParamModel, path: str, state: str,
-        add_key: bool = True
+        _: ParamModel, path: str, state: str
 ) -> str:
-    if add_key:
-        key_name = path.split(".")[-1]
-        state = _build_key_transitions(
-            transition_table, state,
-            "\"" + key_name + "\":"
-        )
     transition_table[(state, "n")] = f"NULL_N_{path}"
     transition_table[(f"NULL_N_{path}", "u")] = f"NULL_U_{path}"
     transition_table[(f"NULL_U_{path}", "l")] = f"NULL_L_{path}"
@@ -157,69 +132,21 @@ def _build_arg_null_transitions(
 
 def _build_arg_object_transitions(
         transition_table: dict[tuple[str, str], str],
-        arg_schema: ParamModel, path: str, state: str,
-        _: bool = True
+        arg_schema: ParamModel, path: str, state: str
 ) -> str:
-    key_name = path.split(".")[-1]
-    state = _build_key_transitions(
-        transition_table, state,
-        "\"" + key_name + "\":{"
-    )
+    new_state = f"{state}{{"
+    transition_table[(state, "{")] = new_state
+    state = new_state
     properties = arg_schema.properties
     if properties is None:
         raise ValueError(f"Object parameter `{path}` has no properties.")
     args_nb = len(properties)
     arg = ""
     for arg in properties:
-        json_type = properties[arg].type
-        if json_type == "object":
-            state = _build_arg_object_transitions(
-                transition_table,
-                properties[arg], f"{path}.{arg}",
-                state
-            )
-        elif json_type == "array":
-            state = _build_arg_array_transitions(
-                transition_table,
-                properties[arg], f"{path}.{arg}",
-                state
-            )
-        elif json_type == "string":
-            state = _build_arg_string_transitions(
-                transition_table,
-                properties[arg], f"{path}.{arg}",
-                state
-            )
-        elif json_type == "integer":
-            state = _build_arg_integer_transitions(
-                transition_table,
-                properties[arg], f"{path}.{arg}",
-                state
-            )
-        elif json_type == "number":
-            state = _build_arg_number_transitions(
-                transition_table,
-                properties[arg], f"{path}.{arg}",
-                state
-            )
-        elif json_type == "boolean":
-            state = _build_arg_boolean_transitions(
-                transition_table,
-                properties[arg], f"{path}.{arg}",
-                state
-            )
-        elif json_type == "null":
-            state = _build_arg_null_transitions(
-                transition_table,
-                properties[arg], f"{path}.{arg}",
-                state
-            )
-        else:
-            raise TypeError(
-                f"`{json_type}` is not a valid JSON type. "
-                "Supported types: string, integer, number,"
-                " boolean, null, object, array."
-            )
+        state = _build_key(transition_table, state, arg)
+        state = _build_arg_transitions(
+            transition_table, properties[arg],
+            f"{path}.{arg}", state)
         args_nb -= 1
         separator = "}" if args_nb == 0 else ","
         transition_table[(state, separator)] = f"END_{path}.{arg}"
@@ -230,14 +157,11 @@ def _build_arg_object_transitions(
 
 def _build_arg_array_transitions(
         transition_table: dict[tuple[str, str], str],
-        arg_schema: ParamModel, path: str, state: str,
-        _: bool = True
+        arg_schema: ParamModel, path: str, state: str
 ) -> str:
-    key_name = path.split(".")[-1]
-    state = _build_key_transitions(
-        transition_table, state,
-        "\"" + key_name + "\":["
-    )
+    new_state = f"{state}["
+    transition_table[(state, "[")] = new_state
+    state = new_state
     items = arg_schema.items
     if items is None:
         raise ValueError(f"Array parameter {path} has no items.")
@@ -245,16 +169,14 @@ def _build_arg_array_transitions(
     if items_type == "string":
         state = _build_arg_string_transitions(
             transition_table,
-            items, path,
-            state, False
+            items, path, state
         )
         transition_table[(state, ",")] = f"NEXT_STR_{path}"
         transition_table[(f"NEXT_STR_{path}", "\"")] = f"STR_{path}"
     elif items_type == "integer":
         state = _build_arg_integer_transitions(
             transition_table,
-            items, path,
-            state, False
+            items, path, state
         )
         transition_table[(state, ",")] = f"NEXT_NB_{path}"
         transition_table[(f"NEXT_NB_{path}", "-")] = f"WAIT_NB_{path}"
@@ -263,8 +185,7 @@ def _build_arg_array_transitions(
     elif items_type == "number":
         state = _build_arg_number_transitions(
             transition_table,
-            items, path,
-            state, False
+            items, path, state
         )
         transition_table[(state, ",")] = f"NEXT_NB_{path}"
         transition_table[(f"NEXT_NB_{path}", "-")] = f"WAIT_NB_{path}"
@@ -273,8 +194,7 @@ def _build_arg_array_transitions(
     elif items_type == "boolean":
         state = _build_arg_boolean_transitions(
             transition_table,
-            items, path,
-            state, False
+            items, path, state
         )
         transition_table[(state, ",")] = f"NEXT_BOOL_{path}"
         transition_table[(f"NEXT_BOOL_{path}", "t")] = f"BOOL_T_{path}"
@@ -282,8 +202,7 @@ def _build_arg_array_transitions(
     elif items_type == "null":
         state = _build_arg_null_transitions(
             transition_table,
-            items, path,
-            state, False
+            items, path, state
         )
         transition_table[(state, ",")] = f"NEXT_NULL_{path}"
         transition_table[(f"NEXT_NULL_{path}", "n")] = f"NULL_N_{path}"
@@ -320,15 +239,14 @@ def _build_arg_transitions(
     arg_type: str = arg_schema.type
     builder: ArgBuilderType | None = ARG_TYPE_TO_BUILDER.get(arg_type, None)
     if not builder:
-        raise TypeError(
-            "This JSON type is not supported. "
+        raise ValueError(
+            f"Type `{arg_type}` is not supported. "
             "Supported types are: string, integer, number,"
             " boolean, null, object, array."
         )
     return builder(
             transition_table,
-            arg_schema, path,
-            state, True
+            arg_schema, path, state
     )
 
 
@@ -340,6 +258,7 @@ def _build_func_params_transitions(
     len_fun_params = len(func_params)
     for arg in func_params:
         path = f"{func_name}.{arg}"
+        state = _build_key(transition_table, state, arg)
         state = _build_arg_transitions(
             transition_table,
             func_params[arg], path, state
