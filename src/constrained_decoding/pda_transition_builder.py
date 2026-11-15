@@ -1,5 +1,11 @@
 import json
 import pprint
+from typing import Callable
+
+ArgBuilderType = Callable[
+    [dict[tuple[str, str], str], dict, str, str, bool],
+    str
+]
 
 
 def _add_new_entry(
@@ -150,8 +156,8 @@ def _build_arg_null_transitions(
 
 def _build_arg_object_transitions(
         transition_table: dict[tuple[str, str], str],
-        arg_schema: dict, path: str,
-        state: str
+        arg_schema: dict, path: str, state: str,
+        _: bool = True
 ) -> str:
     key_name = path.split(".")[-1]
     state = _build_key_transitions(
@@ -207,8 +213,9 @@ def _build_arg_object_transitions(
             )
         else:
             raise TypeError(
-                f"`{type}` is not a valid JSON type. "
-                "Supported types: string, number, boolean, null, object, array"
+                f"`{json_type}` is not a valid JSON type. "
+                "Supported types: string, integer, number,"
+                " boolean, null, object, array"
             )
         args_nb -= 1
         separator = "}" if args_nb == 0 else ","
@@ -220,8 +227,8 @@ def _build_arg_object_transitions(
 
 def _build_arg_array_transitions(
         transition_table: dict[tuple[str, str], str],
-        arg_schema: dict, path: str,
-        state: str
+        arg_schema: dict, path: str, state: str,
+        _: bool = True
 ) -> str:
     key_name = path.split(".")[-1]
     state = _build_key_transitions(
@@ -276,8 +283,9 @@ def _build_arg_array_transitions(
         transition_table[(f"NEXT_NULL_{path}", "n")] = f"NULL_N_{path}"
     else:
         raise TypeError(
-            f"`{type}` is not a valid JSON type. "
-            "Supported types are: string, number, boolean, null, object, array"
+            f"`{json_type}` is not a valid JSON type. "
+            "Supported types are: string, integer, number,"
+            " boolean, null, object, array"
         )
     next_state = f"ARR_END_{path}"
     transition_table[(state, "]")] = next_state
@@ -285,7 +293,10 @@ def _build_arg_array_transitions(
     return next_state
 
 
-ARG_TYPE_TO_BUILDER = {
+ARG_TYPE_TO_BUILDER: dict[
+    str,
+    ArgBuilderType
+] = {
     "string": _build_arg_string_transitions,
     "integer": _build_arg_integer_transitions,
     "number": _build_arg_number_transitions,
@@ -300,24 +311,25 @@ def _build_arg_transitions(
         transition_table: dict[tuple[str, str], str],
         arg_schema: dict, path: str, state: str
 ) -> str:
-    type = arg_schema.get("type", "")
-    builder = ARG_TYPE_TO_BUILDER.get(type, None)
+    arg_type: str = arg_schema.get("type", "")
+    builder: ArgBuilderType | None = ARG_TYPE_TO_BUILDER.get(arg_type, None)
     if not builder:
         raise TypeError(
-            "This JSON type is not supported."
-            "Supported types are: string, number, boolean, null, object, array"
+            "This JSON type is not supported. "
+            "Supported types are: string, integer, number,"
+            " boolean, null, object, array"
         )
     return builder(
             transition_table,
             arg_schema, path,
-            state
+            state, True
     )
 
 
 def _build_func_params_transitions(
     transition_table: dict[tuple[str, str], str],
     func_params: dict, func_name: str, state: str
-):
+) -> None:
     len_fun_params = len(func_params)
     for arg in func_params:
         path = f"{func_name}.{arg}"
@@ -337,7 +349,7 @@ def _build_func_transitions(
     transition_table: dict[tuple[str, str], str],
     func_name_states: set[str],
     func: dict
-):
+) -> None:
     state = _build_func_name_transitions(
         transition_table, func_name_states, func["name"]
     )

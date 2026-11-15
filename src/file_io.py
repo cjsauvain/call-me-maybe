@@ -22,7 +22,7 @@ def load_func_definitions(path: Path) -> list[FuncDefinitions]:
     )
 
 
-def save_llm_output(output_path, llm_outputs: list[str]):
+def save_llm_output(output_path: str, llm_outputs: list[str]) -> None:
     print(f"Saving output to {output_path}...")
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     llm_output = json.loads("[" + ",".join(llm_outputs) + "]")

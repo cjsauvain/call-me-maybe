@@ -45,7 +45,7 @@ def _look_for_generation_errors(
     json_prefixes: list[str],
     generation_states: list[GenerationState],
     inputs: list[FuncCallInput]
-):
+) -> None:
     for idx in range(len(json_prefixes)):
         if generation_states[idx].failed:
             print(f"Generation error:\n{json_prefixes[idx]}", file=stderr)
@@ -57,9 +57,9 @@ def _look_for_generation_errors(
 
 
 def _update_generation_status(
-        len_ignored_indexes, input_count: int,
+        len_ignored_indexes: int, input_count: int,
         generation_states: list[GenerationState]
-):
+) -> None:
     generated_token_count = sum(
         generation_state.generated_token_count
         for generation_state in generation_states
@@ -81,7 +81,7 @@ def _update_generation_status(
 
 def _save_prompt_generation_state(
     generation_state: GenerationState, state: str, len_force_ids: int
-):
+) -> None:
     generation_state.state = state
     generation_state.generated_token_count += 1
     generation_state.forced_token_count += len_force_ids
@@ -155,7 +155,7 @@ def produce_output(
     constrained_decoder: ConstrainedDecoder,
     inputs: list[FuncCallInput],
     func_definitions: list[FuncDefinitions],
-):
+) -> None:
     input_count = len(inputs)
     generation_states = [GenerationState() for _ in range(input_count)]
     json_prefixes = [
@@ -165,7 +165,7 @@ def produce_output(
     current_inputs_ids = _build_prompts_ids(
         model, inputs, func_definitions, json_prefixes
     )
-    indexes_to_ignore = []
+    indexes_to_ignore: list[int] = []
     while len(indexes_to_ignore) != len(current_inputs_ids):
         for idx, current_input_ids in enumerate(current_inputs_ids):
             if idx in indexes_to_ignore:

@@ -15,10 +15,10 @@ class JSONPushdownAutomaton:
             self._transition_table
         )
 
-    def is_in_func_name(self, state) -> bool:
+    def is_in_func_name(self, state: str) -> bool:
         return state in self._func_name_states
 
-    def set_state(self, state: str):
+    def set_state(self, state: str) -> None:
         self._state = state
 
     def get_state(self) -> str:
