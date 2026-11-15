@@ -2,15 +2,16 @@ from src.constrained_decoding.pda_transition_builder import (
     build_outgoing_transitions,
     build_transition_table
 )
+from src.function_calling.func_definitions import FuncDefinitions
 
 
 class JSONPushdownAutomaton:
-    def __init__(self, func_definitions_path: str):
+    def __init__(self, func_definitions: list[FuncDefinitions]):
         self._state: str = ""
         self._transition_table: dict[tuple[str, str], str]
         self._func_name_states: set[str]
         self._transition_table, self._func_name_states = \
-            build_transition_table(func_definitions_path)
+            build_transition_table(func_definitions)
         self._outgoing_transitions = build_outgoing_transitions(
             self._transition_table
         )

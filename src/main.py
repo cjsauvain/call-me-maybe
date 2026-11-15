@@ -199,16 +199,15 @@ def produce_output(
 def main() -> None:
     args = parse_cli()
 
-    func_definitions_path = args.func_definitions
     # Get prompts + function definitions
     inputs, func_definitions = json_input_validation(
-        args.input, func_definitions_path
+        args.input, args.function_definitions
     )
     # Produce output
     model = Small_LLM_Model()
     constrained_decoder = ConstrainedDecoder(
         model,
-        pda=JSONPushdownAutomaton(func_definitions_path)
+        pda=JSONPushdownAutomaton(func_definitions)
     )
     produce_output(
         args.output, model, constrained_decoder,

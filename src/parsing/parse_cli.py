@@ -7,14 +7,14 @@ def parse_cli() -> argparse.Namespace:
     )
 
     parser.add_argument(
-        "--func-definitions",
+        "--function-definitions",
         help="JSON file containing function definitions for the LLM",
         type=str,
         default="./data/input/function_definitions.json",
     )
     parser.add_argument(
         "--input",
-        help="JSON file containing inputs for the LLM",
+        help="JSON file containing prompts for the LLM",
         type=str,
         default="./data/input/function_calling_tests.json",
     )
