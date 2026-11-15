@@ -10,7 +10,7 @@ from src.function_calling.func_call_input import FuncCallInput
 from src.function_calling.func_definitions import FuncDefinitions
 from src.function_calling.validation import json_input_validation
 from src.parsing.parse_cli import parse_cli
-from src.constrained_decoding.json_pda import JSONPushdownAutomaton
+from src.constrained_decoding.json_fsm import JSONSchemaFSM
 
 
 EXAMPLE_OUTPUT = [
@@ -130,8 +130,8 @@ def _generate_tokens(
 ) -> tuple[str, str, int]:
     forced_ids = []
     generated_tokens = ""
-    state = constrained_decoder.pda.get_state()
-    if not constrained_decoder.pda.is_in_func_name(state):
+    state = constrained_decoder.fsm.get_state()
+    if not constrained_decoder.fsm.is_in_func_name(state):
         generated_tokens = constrained_decoder.retrieve_forced_text()
         if generated_tokens:
             forced_ids.extend(model.encode(generated_tokens)[0].tolist())
@@ -175,7 +175,7 @@ def produce_output(
                 indexes_to_ignore.append(idx)
                 generation_states[idx].failed = True
                 continue
-            constrained_decoder.pda.set_state(generation_states[idx].state)
+            constrained_decoder.fsm.set_state(generation_states[idx].state)
             state, generated_tokens, len_forced_ids = _generate_tokens(
                 constrained_decoder, model,
                 current_input_ids
@@ -199,15 +199,13 @@ def produce_output(
 def main() -> None:
     args = parse_cli()
 
-    # Get prompts + function definitions
     inputs, func_definitions = json_input_validation(
         args.input, args.function_definitions
     )
-    # Produce output
     model = Small_LLM_Model()
     constrained_decoder = ConstrainedDecoder(
         model,
-        pda=JSONPushdownAutomaton(func_definitions)
+        fsm=JSONSchemaFSM(func_definitions)
     )
     produce_output(
         args.output, model, constrained_decoder,

@@ -1,11 +1,11 @@
-from src.constrained_decoding.pda_transition_builder import (
+from src.constrained_decoding.fsm_transition_builder import (
     build_outgoing_transitions,
     build_transition_table
 )
 from src.function_calling.func_definitions import FuncDefinitions
 
 
-class JSONPushdownAutomaton:
+class JSONSchemaFSM:
     def __init__(self, func_definitions: list[FuncDefinitions]):
         self._state: str = ""
         self._transition_table: dict[tuple[str, str], str]
