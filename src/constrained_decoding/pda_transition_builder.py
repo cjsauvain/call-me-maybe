@@ -364,3 +364,16 @@ def build_transition_table(
     with open("transition_table.json", "w") as file:
         pprint.pprint(transition_table, stream=file, indent=4)
     return transition_table
+
+
+def build_outgoing_transitions(
+    transition_table: dict[tuple[str, str], str]
+) -> dict[str, list[tuple[str, str]]]:
+    outgoing_transitions: dict[str, list[tuple[str, str]]] = {}
+
+    for (state, input_category), next_state in transition_table.items():
+        outgoing_transitions.setdefault(
+            state, []
+        ).append((input_category, next_state))
+
+    return outgoing_transitions

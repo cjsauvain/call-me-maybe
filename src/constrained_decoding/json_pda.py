@@ -1,4 +1,5 @@
 from src.constrained_decoding.pda_transition_builder import (
+    build_outgoing_transitions,
     build_transition_table
 )
 
@@ -8,15 +9,23 @@ class JSONPushdownAutomaton:
         self._state: str = ""
         self._transition_table: dict[tuple[str, str], str] = \
             build_transition_table(func_definitions_path)
+        self._outgoing_transitions = build_outgoing_transitions(
+            self._transition_table
+        )
 
     def set_state(self, state: str):
         self._state = state
 
     def get_state(self) -> str:
         return self._state
-    
-    def get_transition_table(self) -> dict[tuple[str, str], str]:
-        return self._transition_table
+
+    def get_unique_outgoing_transition(
+        self, state: str
+    ) -> tuple[str, str] | None:
+        outgoing_transitions = self._outgoing_transitions.get(state, [])
+        if len(outgoing_transitions) != 1:
+            return None
+        return outgoing_transitions[0]
 
     def transition(self, char: str) -> str:
         input_category = self._get_input_category(char)

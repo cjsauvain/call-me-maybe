@@ -33,35 +33,15 @@ class ConstrainedDecoder:
                 return token_id, state
         return None
 
-    def _get_forced_transition(
-            self, current_state: str
-    ) -> tuple[bool, str, str]:
-        transition_table = self.pda.get_transition_table()
-        count = 0
-        input_category_tmp = ""
-        next_state_tmp = current_state
-        for (
-            (state, input_category), next_state
-         ) in transition_table.items():
-            if count > 1:
-                return False, "", ""
-            if state == current_state:
-                count += 1
-                input_category_tmp = input_category
-                next_state_tmp = next_state
-        return count == 1, input_category_tmp, next_state_tmp
-
     def retrieve_forced_text(self) -> str:
         forced_text = ""
         while True:
             current_state = self.pda.get_state()
-            result, input_category, next_state = \
-                self._get_forced_transition(current_state)
-            if not result:
+            result = self.pda.get_unique_outgoing_transition(current_state)
+            if result is None:
                 break
-            if input_category in GENERIC_INPUTS:
-                break
-            if next_state == "ACCEPT":
+            input_category, next_state = result
+            if input_category in GENERIC_INPUTS or next_state == "ACCEPT":
                 break
             self.pda.set_state(next_state)
             forced_text += input_category
