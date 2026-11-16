@@ -170,6 +170,7 @@ def _generate_tokens(
 
 def produce_output(
     output_path: str,
+    generation_visualization: bool,
     model: Small_LLM_Model,
     constrained_decoder: ConstrainedDecoder,
     inputs: list[FuncCallInput],
@@ -238,7 +239,8 @@ def main() -> None:
             fsm=JSONSchemaFSM(func_definitions=func_definitions)
         )
         produce_output(
-            args.output, model, constrained_decoder,
+            args.output, args.generation_visualization,
+            model, constrained_decoder,
             inputs, func_definitions
         )
     except KeyboardInterrupt:
