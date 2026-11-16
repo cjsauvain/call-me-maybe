@@ -18,7 +18,7 @@ clean:
 	rm -rf .mypy_cache
 
 lint:
-	flake8
+	uv run flake8
 	uv run mypy . --warn-return-any \
 			--warn-unused-ignores \
 			--ignore-missing-imports \

@@ -1,9 +1,10 @@
-from dataclasses import dataclass
 import json
 import sys
 from textwrap import dedent
 
-from llm_sdk.llm_sdk import Small_LLM_Model
+from pydantic import BaseModel
+
+from src.lib.llm_sdk.llm_sdk import Small_LLM_Model
 from src.constrained_decoding.constrained_decoder import ConstrainedDecoder
 from src.file_io import save_llm_output
 from src.function_calling.func_call_input import FuncCallInput
@@ -33,8 +34,7 @@ EXAMPLE_OUTPUT = [
 MAX_GENERATED_TOKENS = 200
 
 
-@dataclass
-class GenerationState:
+class GenerationState(BaseModel):
     """Generation progress of one prompt.
 
     Attributes:
@@ -270,8 +270,8 @@ def main() -> None:
         )
         model = Small_LLM_Model()
         constrained_decoder = ConstrainedDecoder(
-            model,
-            fsm=JSONSchemaFSM(func_definitions)
+            model=model,
+            fsm=JSONSchemaFSM(func_definitions=func_definitions)
         )
         produce_output(
             args.output, model, constrained_decoder,

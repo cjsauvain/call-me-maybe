@@ -1,3 +1,7 @@
+from typing import Any
+
+from pydantic import BaseModel, ConfigDict
+
 from src.constrained_decoding.fsm_transition_builder import (
     build_outgoing_transitions,
     build_transition_table
@@ -5,19 +9,23 @@ from src.constrained_decoding.fsm_transition_builder import (
 from src.function_calling.func_definitions import FuncDefinitions
 
 
-class JSONSchemaFSM:
+class JSONSchemaFSM(BaseModel):
     """Finite-state machine accepting valid function calls."""
-    def __init__(self, func_definitions: list[FuncDefinitions]):
-        """Build the transition tables.
+    model_config = ConfigDict(extra='forbid')
 
-        Args:
-            func_definitions: Validated function definitions.
+    func_definitions: list[FuncDefinitions]
+    _state: str = ""
+    _func_name_states: set[str] = set()
+    _transition_table: dict[tuple[str, str], str] = {}
+    _outgoing_transitions: dict[str, list[tuple[str, str]]] = {}
+
+    def model_post_init(self, _: Any) -> None:
         """
-        self._state: str = ""
-        self._transition_table: dict[tuple[str, str], str]
-        self._func_name_states: set[str]
+        Build the transition table, the function name states
+        and the outgoing transitions.
+        """
         self._transition_table, self._func_name_states = \
-            build_transition_table(func_definitions)
+            build_transition_table(self.func_definitions)
         self._outgoing_transitions = build_outgoing_transitions(
             self._transition_table
         )

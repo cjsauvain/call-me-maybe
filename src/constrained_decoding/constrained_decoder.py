@@ -1,4 +1,8 @@
-from llm_sdk.llm_sdk import Small_LLM_Model
+from typing import Any
+
+from pydantic import BaseModel, ConfigDict
+
+from src.lib.llm_sdk.llm_sdk import Small_LLM_Model
 from src.constrained_decoding.json_fsm import JSONSchemaFSM
 
 
@@ -6,7 +10,7 @@ VOCAB_SIZE = 151643
 GENERIC_INPUTS = {"CHAR", "SPECIAL_CHAR", "DIGIT"}
 
 
-class ConstrainedDecoder:
+class ConstrainedDecoder(BaseModel):
     """Pick the next token using the model logits and the FSM.
 
     Attributes:
@@ -14,16 +18,15 @@ class ConstrainedDecoder:
         fsm: Automaton checking the output.
         vocab: Text of each token id.
     """
-    def __init__(self, model: Small_LLM_Model, fsm: JSONSchemaFSM):
-        """Build the token vocabulary.
+    model_config = ConfigDict(extra='forbid', arbitrary_types_allowed=True)
 
-        Args:
-            model: The language model.
-            fsm: Automaton checking the output.
-        """
-        self.model: Small_LLM_Model = model
-        self.fsm: JSONSchemaFSM = fsm
-        self.vocab: list[str] = [model.decode([i]) for i in range(VOCAB_SIZE)]
+    model: Small_LLM_Model
+    fsm: JSONSchemaFSM
+    vocab: list[str] = []
+
+    def model_post_init(self, _: Any) -> None:
+        """Build the token vocabulary."""
+        self.vocab = [self.model.decode([i]) for i in range(VOCAB_SIZE)]
 
     def decode(self, logits: list[float]) -> tuple[int, str] | None:
         """Pick the most likely token accepted by the FSM.
