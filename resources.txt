@@ -6,6 +6,12 @@ Pytest:
         -> Fixtures
         -> Parameterized testing
         -> Mocks
+    - https://docs.pytest.org/en/7.1.x/explanation/goodpractices.html
+        -> Test layout
+    - https://pytest-cov.readthedocs.io/en/latest/config.html
+        -> Pytest coverage
+    - https://coverage.readthedocs.io/en/latest/config.html
+        -> Pytest coverage pyproject.toml config
 Pydantic:
     - https://www.youtube.com/watch?v=XIdQ6gO3Anc
         -> Basics

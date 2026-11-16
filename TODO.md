@@ -1,9 +1,5 @@
 ## Subject compliance (mandatory part)
 
-### Edge cases to reject at validation (pydantic) with a clear message
-- [ ] Use pydantic for every class: `GenerationState`, `JSONPushdownAutomaton`, `ConstrainedDecoder`
-- [ ] Add test files
-
 ### README.md (in English)
 - [ ] First line in italics: *This project has been created as part of the 42 curriculum by <login>*
 - [ ] Description section

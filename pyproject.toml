@@ -25,6 +25,7 @@ build-backend = "uv_build"
 dev = [
     "flake8>=7.5.0",
     "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
     "pytest-mock>=3.17.0",
 ]
 
