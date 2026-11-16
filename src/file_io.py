@@ -46,18 +46,18 @@ def load_func_definitions(path: Path) -> list[FuncDefinitions]:
     )
 
 
-def save_llm_output(output_path: str, llm_outputs: list[str]) -> None:
+def save_llm_output(output_path: str, llm_output: list[str]) -> None:
     """Write the generated function calls to a JSON file.
 
     Args:
         output_path: Path of the output file.
-        llm_outputs: JSON text of each function call.
+        llm_output: JSON text of each function call.
 
     Raises:
         OSError: If the file cannot be written.
     """
     print(f"Saving output to {output_path}...")
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-    llm_output = json.loads("[" + ",".join(llm_outputs) + "]")
+    llm_output = json.loads("[" + ",".join(llm_output) + "]")
     with open(output_path, "w") as file:
         json.dump(llm_output, file, indent=4)

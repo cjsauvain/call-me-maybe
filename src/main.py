@@ -18,128 +18,118 @@ MAX_GENERATED_TOKENS = 80
 
 
 class GenerationState(BaseModel):
-    """Generation progress of one prompt.
+    """Generation progress of the prompts.
 
     Attributes:
-        state: Current FSM state.
-        generated_token_count: Tokens chosen by the model.
-        forced_token_count: Tokens forced by the FSM.
-        error: Why the generation failed, empty on success.
+        total_generated_token_count: Tokens chosen by the model,
+            over all prompts.
+        prompt_generated_token_count: Tokens chosen by the model
+            for the current prompt, reset between prompts.
+        total_forced_token_count: Tokens forced by the FSM,
+            over all prompts.
+        completed_prompt_count: Prompts processed, failed ones included.
+        error: Why the current prompt failed, empty on success.
     """
-    state: str = ""
-    generated_token_count: int = 0
-    forced_token_count: int = 0
+    total_generated_token_count: int = 0
+    prompt_generated_token_count: int = 0
+    total_forced_token_count: int = 0
+    completed_prompt_count: int = 0
     error: str = ""
 
 
 def _look_for_generation_errors(
-    json_prefixes: list[str],
-    generation_states: list[GenerationState],
-    inputs: list[FuncCallInput]
-) -> None:
-    """Replace the output of failed prompts with an error.
+    json_prefix: str,
+    generation_state: GenerationState,
+    input: FuncCallInput
+) -> str:
+    """Replace the output of a failed prompt with an error.
+
+    Prints the partial output on stderr and clears the error.
 
     Args:
-        json_prefixes: JSON of each prompt, updated in place.
-        generation_states: Progress of each prompt.
-        inputs: The prompts.
+        json_prefix: JSON generated for the prompt.
+        generation_state: Generation progress, holding the error.
+        input: The prompt.
+
+    Returns:
+        The generated JSON, or an error JSON if the prompt failed.
     """
-    for idx in range(len(json_prefixes)):
-        if generation_states[idx].error:
-            print(f"Generation error:\n{json_prefixes[idx]}", file=sys.stderr)
-            error_dict = {
-                "prompt": inputs[idx].prompt,
-                "error": generation_states[idx].error
-            }
-            json_prefixes[idx] = json.dumps(error_dict)
+    if generation_state.error:
+        print()
+        print(f"Generation error:\n{json_prefix}", file=sys.stderr)
+        error_dict = {
+            "prompt": input.prompt,
+            "error": generation_state.error
+        }
+        json_prefix = json.dumps(error_dict)
+        generation_state.error = ""
+    return json_prefix
 
 
 def _update_generation_status(
-        len_ignored_indexes: int, input_count: int,
-        generation_states: list[GenerationState]
+    generation_state: GenerationState,
+    input_count: int,
+    len_forced_ids: int,
+    prompt_completed: bool = False
 ) -> None:
-    """Print the generation progress on one line.
+    """Count the new tokens and print the progress on one line.
 
     Args:
-        len_ignored_indexes: Number of finished prompts.
+        generation_state: Generation progress, updated in place.
         input_count: Number of prompts.
-        generation_states: Progress of each prompt.
+        len_forced_ids: Number of tokens forced before the new token.
     """
-    generated_token_count = sum(
-        generation_state.generated_token_count
-        for generation_state in generation_states
-    )
-    forced_token_count = sum(
-        [
-            generation_state.forced_token_count
-            for generation_state in generation_states
-        ]
-    )
+    if prompt_completed:
+        generation_state.completed_prompt_count += 1
+        generation_state.prompt_generated_token_count = 0
+    generation_state.prompt_generated_token_count += 1
+    generation_state.total_generated_token_count += 1
+    generation_state.total_forced_token_count += len_forced_ids
     print(
-        f"Generating tokens: {len_ignored_indexes}/{input_count}"
+        "Generating tokens: "
+        f"{generation_state.completed_prompt_count}/{input_count}"
         " prompts completed",
-        f"| {generated_token_count} tokens generated",
-        f"| {forced_token_count} tokens forced",
+        f"| {generation_state.total_generated_token_count} tokens generated",
+        f"| {generation_state.total_forced_token_count} tokens forced",
         end="\r"
     )
 
 
-def _save_prompt_generation_state(
-    generation_state: GenerationState, state: str, len_force_ids: int
-) -> None:
-    """Record the new state and token counts of a prompt.
-
-    Args:
-        generation_state: Progress to update.
-        state: New FSM state.
-        len_force_ids: Number of forced tokens.
-    """
-    generation_state.state = state
-    generation_state.generated_token_count += 1
-    generation_state.forced_token_count += len_force_ids
+def _build_system_prompt(func_definitions: FuncDefinitions) -> str:
+    return dedent(f"""
+        You are provided with function signatures
+        within <tools></tools> XML tags:
+        <tools>
+        {json.dumps([f.model_dump() for f in func_definitions])}
+        </tools>
+        Your role is to provide the function name and argument(s).
+    """).strip()
 
 
 def _build_prompts_ids(
     model: Small_LLM_Model,
-    inputs: list[FuncCallInput],
-    func_definitions: list[FuncDefinitions],
-    json_prefixes: list[str]
-) -> list[list]:
-    """Build and encode the chat prompt of each input.
+    input: FuncCallInput,
+    system_prompt: str,
+    json_prefix: str
+) -> list[int]:
+    """Build and encode a chat prompt.
 
     Args:
         model: Model used to encode.
-        inputs: The prompts.
-        func_definitions: Functions shown to the model.
-        json_prefixes: Start of the JSON output of each prompt.
+        input: The prompt.
+        system_prompt: System message listing the functions.
+        json_prefix: Start of the JSON output for the prompt.
 
     Returns:
-        The token ids of each prompt.
+        The token ids of the prompt.
     """
-    tools = json.dumps([f.model_dump() for f in func_definitions])
-    system_prompt = dedent("""
-        You are provided with function signatures
-        within <tools></tools> XML tags:
-        <tools>
-        {tools}
-        </tools>
-        Your role is to provide the function name and argument(s).
-    """).strip().format(tools=tools)
-    formatted_prompts = [
+    formatted_prompt = (
         f"<|im_start|>system\n{system_prompt}<|im_end|>\n"
         f"<|im_start|>user\n{input.prompt}<|im_end|>\n"
         "<|im_start|>assistant\n"
-        for input in inputs
-    ]
-    current_inputs_ids = []
-    for formatted_prompt, json_prefix in zip(formatted_prompts, json_prefixes):
-        current_inputs_ids.append(
-            model.encode(
-                formatted_prompt + json_prefix
-            )[0].tolist()
-        )
+    )
 
-    return current_inputs_ids
+    return model.encode(formatted_prompt + json_prefix)[0].tolist()
 
 
 def _generate_tokens(
@@ -185,7 +175,8 @@ def produce_output(
     inputs: list[FuncCallInput],
     func_definitions: list[FuncDefinitions],
 ) -> None:
-    """Generate a function call for each prompt and save them.
+    """Generate a function call for each prompt, one after the other,
+    and save them.
 
     Args:
         output_path: Path of the output file.
@@ -194,49 +185,43 @@ def produce_output(
         inputs: The prompts.
         func_definitions: Functions shown to the model.
     """
+    generation_state = GenerationState()
+    system_prompt = _build_system_prompt(func_definitions)
+    llm_output = []
     input_count = len(inputs)
-    generation_states = [GenerationState() for _ in range(input_count)]
-    json_prefixes = [
-        f'{{"prompt":{json.dumps(input.prompt)},"name":"'
-        for input in inputs
-    ]
-    current_inputs_ids = _build_prompts_ids(
-        model, inputs, func_definitions, json_prefixes
-    )
-    indexes_to_ignore: list[int] = []
-    while len(indexes_to_ignore) != len(current_inputs_ids):
-        for idx, current_input_ids in enumerate(current_inputs_ids):
-            if idx in indexes_to_ignore:
-                continue
-            if generation_states[idx].generated_token_count \
+    for input in inputs:
+        json_prefix = f'{{"prompt":{json.dumps(input.prompt)},"name":"'
+        current_input_ids = _build_prompts_ids(
+            model, input, system_prompt, json_prefix
+        )
+        state = ""
+        constrained_decoder.fsm.set_state(state)
+        while state != "ACCEPT":
+            if generation_state.prompt_generated_token_count \
                     >= MAX_GENERATED_TOKENS:
-                indexes_to_ignore.append(idx)
-                generation_states[idx].error = "max tokens reached"
-                continue
-            constrained_decoder.fsm.set_state(generation_states[idx].state)
+                generation_state.error = "max tokens reached"
+                break
             try:
                 state, generated_tokens, len_forced_ids = _generate_tokens(
                     constrained_decoder, model,
                     current_input_ids
                 )
             except RuntimeError as e:
-                indexes_to_ignore.append(idx)
-                generation_states[idx].error = str(e)
-                continue
-            json_prefixes[idx] += generated_tokens
-            if state == "ACCEPT":
-                indexes_to_ignore.append(idx)
-            _save_prompt_generation_state(
-                generation_states[idx], state,
-                len_forced_ids
-            )
+                generation_state.error = str(e)
+                break
+            constrained_decoder.fsm.set_state(state)
+            json_prefix += generated_tokens
             _update_generation_status(
-                len(indexes_to_ignore), input_count,
-                generation_states
+                generation_state, input_count, len_forced_ids
             )
+        _update_generation_status(
+            generation_state, input_count, len_forced_ids, True
+        )
+        llm_output.append(
+            _look_for_generation_errors(json_prefix, generation_state, input)
+        )
     print()
-    _look_for_generation_errors(json_prefixes, generation_states, inputs)
-    save_llm_output(output_path, json_prefixes)
+    save_llm_output(output_path, llm_output)
 
 
 def main() -> None:
