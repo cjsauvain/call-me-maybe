@@ -32,4 +32,4 @@ module-name = "src"
 module-root = "."
 
 [tool.uv.sources]
-llm-sdk = { path = "./llm_sdk" }
+llm-sdk = { path = "./src/lib/llm_sdk" }
