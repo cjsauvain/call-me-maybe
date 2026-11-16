@@ -14,24 +14,7 @@ from src.parsing.parse_cli import parse_cli
 from src.constrained_decoding.json_fsm import JSONSchemaFSM
 
 
-EXAMPLE_OUTPUT = [
-    {
-        "prompt": "What is the result of 45 * 21",
-        "name": "fn_mul_numbers",
-        "parameters": {
-            "a": 45,
-            "b": 21
-        }
-    },
-    {
-        "prompt": "Tell a story for a 3 year-old kid",
-        "name": "fn_tell_age_appropriate_story",
-        "parameters": {
-            "age": 3
-        }
-    }
-]
-MAX_GENERATED_TOKENS = 200
+MAX_GENERATED_TOKENS = 80
 
 
 class GenerationState(BaseModel):
@@ -134,18 +117,14 @@ def _build_prompts_ids(
         The token ids of each prompt.
     """
     tools = json.dumps([f.model_dump() for f in func_definitions])
-    example = json.dumps(EXAMPLE_OUTPUT)
     system_prompt = dedent("""
-        You may call one or more functions to assist with the user query.
         You are provided with function signatures
         within <tools></tools> XML tags:
         <tools>
         {tools}
         </tools>
         Your role is to provide the function name and argument(s).
-        Example of output:
-        {example}
-    """).strip().format(tools=tools, example=example)
+    """).strip().format(tools=tools)
     formatted_prompts = [
         f"<|im_start|>system\n{system_prompt}<|im_end|>\n"
         f"<|im_start|>user\n{input.prompt}<|im_end|>\n"
@@ -268,7 +247,7 @@ def main() -> None:
         inputs, func_definitions = json_input_validation(
             args.input, args.function_definitions
         )
-        model = Small_LLM_Model()
+        model = Small_LLM_Model(device='cpu')
         constrained_decoder = ConstrainedDecoder(
             model=model,
             fsm=JSONSchemaFSM(func_definitions=func_definitions)
