@@ -2,6 +2,7 @@ import argparse
 
 
 def parse_cli() -> argparse.Namespace:
+    """Parse the command line arguments."""
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )

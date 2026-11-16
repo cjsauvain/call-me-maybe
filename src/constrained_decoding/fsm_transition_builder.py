@@ -13,6 +13,16 @@ def _add_new_entry(
     transition_table: dict[tuple[str, str], str],
     state: str, char: str
 ) -> str:
+    """Add a transition to a new state.
+
+    Args:
+        transition_table: Table to fill.
+        state: Source state.
+        char: Character read.
+
+    Returns:
+        The new state.
+    """
     new_state = f"{state}{char}"
     transition_table[(state, char)] = new_state
     return new_state
@@ -23,6 +33,17 @@ def _build_key_transitions(
         state: str, key: str,
         visited_states: set[str] | None = None
 ) -> str:
+    """Add transitions reading a text.
+
+    Args:
+        transition_table: Table to fill.
+        state: State to start from.
+        key: Text to read.
+        visited_states: If given, collects the states reached.
+
+    Returns:
+        The state after the text.
+    """
     for char in key:
         if not transition_table.get((state, char)):
             state = _add_new_entry(transition_table, state, char)
@@ -38,6 +59,16 @@ def _build_func_name_transitions(
     func_name_states: set[str],
     func_name: str
 ) -> str:
+    """Add transitions for a function name and the glue text.
+
+    Args:
+        transition_table: Table to fill.
+        func_name_states: Collects the states inside the name.
+        func_name: Name of the function.
+
+    Returns:
+        The state where the parameters start.
+    """
     state = ""
     func_name_states.add(state)
     state = _build_key_transitions(
@@ -55,6 +86,16 @@ def _build_key(
     transition_table: dict[tuple[str, str], str],
     state: str, key_name: str
 ) -> str:
+    """Add transitions for a JSON key and its colon.
+
+    Args:
+        transition_table: Table to fill.
+        state: State to start from.
+        key_name: Name of the key.
+
+    Returns:
+        The state after the colon.
+    """
     return _build_key_transitions(
         transition_table, state,
         "\"" + key_name + "\":"
@@ -65,6 +106,17 @@ def _build_arg_string_transitions(
         transition_table: dict[tuple[str, str], str],
         _: ParamModel, path: str, state: str
 ) -> str:
+    """Add transitions for a JSON string.
+
+    Args:
+        transition_table: Table to fill.
+        _: Unused, keeps a common signature.
+        path: Unique path of the value.
+        state: State to start from.
+
+    Returns:
+        The state after the value.
+    """
     transition_table[(state, "\"")] = f"STR_{path}"
     transition_table[(f"STR_{path}", "\\")] = f"ESC_{path}"
     transition_table[(f"STR_{path}", "CHAR")] = f"STR_{path}"
@@ -78,6 +130,17 @@ def _build_arg_integer_transitions(
         transition_table: dict[tuple[str, str], str],
         _: ParamModel, path: str, state: str
 ) -> str:
+    """Add transitions for a JSON integer.
+
+    Args:
+        transition_table: Table to fill.
+        _: Unused, keeps a common signature.
+        path: Unique path of the value.
+        state: State to start from.
+
+    Returns:
+        The state after the value.
+    """
     transition_table[(state, "-")] = f"WAIT_NB_{path}"
     transition_table[(state, "DIGIT")] = f"NB_{path}"
     transition_table[(f"WAIT_NB_{path}", "DIGIT")] = f"NB_{path}"
@@ -90,6 +153,17 @@ def _build_arg_number_transitions(
         transition_table: dict[tuple[str, str], str],
         _: ParamModel, path: str, state: str
 ) -> str:
+    """Add transitions for a JSON number with decimals.
+
+    Args:
+        transition_table: Table to fill.
+        _: Unused, keeps a common signature.
+        path: Unique path of the value.
+        state: State to start from.
+
+    Returns:
+        The state after the value.
+    """
     transition_table[(state, "-")] = f"WAIT_NB_{path}"
     transition_table[(state, "DIGIT")] = f"NB_{path}"
     transition_table[(f"WAIT_NB_{path}", "DIGIT")] = f"NB_{path}"
@@ -106,6 +180,17 @@ def _build_arg_boolean_transitions(
         transition_table: dict[tuple[str, str], str],
         _: ParamModel, path: str, state: str
 ) -> str:
+    """Add transitions for `true` and `false`.
+
+    Args:
+        transition_table: Table to fill.
+        _: Unused, keeps a common signature.
+        path: Unique path of the value.
+        state: State to start from.
+
+    Returns:
+        The state after the value.
+    """
     transition_table[(state, "t")] = f"BOOL_T_{path}"
     transition_table[(f"BOOL_T_{path}", "r")] = f"BOOL_R_{path}"
     transition_table[(f"BOOL_R_{path}", "u")] = f"BOOL_U_{path}"
@@ -123,6 +208,17 @@ def _build_arg_null_transitions(
         transition_table: dict[tuple[str, str], str],
         _: ParamModel, path: str, state: str
 ) -> str:
+    """Add transitions for `null`.
+
+    Args:
+        transition_table: Table to fill.
+        _: Unused, keeps a common signature.
+        path: Unique path of the value.
+        state: State to start from.
+
+    Returns:
+        The state after the value.
+    """
     transition_table[(state, "n")] = f"NULL_N_{path}"
     transition_table[(f"NULL_N_{path}", "u")] = f"NULL_U_{path}"
     transition_table[(f"NULL_U_{path}", "l")] = f"NULL_L_{path}"
@@ -135,6 +231,20 @@ def _build_arg_object_transitions(
         transition_table: dict[tuple[str, str], str],
         arg_schema: ParamModel, path: str, state: str
 ) -> str:
+    """Add transitions for a JSON object.
+
+    Args:
+        transition_table: Table to fill.
+        arg_schema: Schema of the object.
+        path: Unique path of the value.
+        state: State to start from.
+
+    Returns:
+        The state after the value.
+
+    Raises:
+        ValueError: If the object has no properties.
+    """
     new_state = f"{state}{{"
     transition_table[(state, "{")] = new_state
     state = new_state
@@ -160,6 +270,20 @@ def _build_arg_array_transitions(
         transition_table: dict[tuple[str, str], str],
         arg_schema: ParamModel, path: str, state: str
 ) -> str:
+    """Add transitions for a JSON array.
+
+    Args:
+        transition_table: Table to fill.
+        arg_schema: Schema of the array.
+        path: Unique path of the value.
+        state: State to start from.
+
+    Returns:
+        The state after the value.
+
+    Raises:
+        ValueError: If the array has no items.
+    """
     new_state = f"{state}["
     transition_table[(state, "[")] = new_state
     state = new_state
@@ -194,6 +318,20 @@ def _build_arg_transitions(
         transition_table: dict[tuple[str, str], str],
         arg_schema: ParamModel, path: str, state: str
 ) -> str:
+    """Call the builder matching the type of the value.
+
+    Args:
+        transition_table: Table to fill.
+        arg_schema: Schema of the value.
+        path: Unique path of the value.
+        state: State to start from.
+
+    Returns:
+        The state after the value.
+
+    Raises:
+        ValueError: If the type is not supported.
+    """
     arg_type: str = arg_schema.type
     builder: ArgBuilderType | None = ARG_TYPE_TO_BUILDER.get(arg_type, None)
     if not builder:
@@ -213,6 +351,14 @@ def _build_func_params_transitions(
     func_params: dict[str, ParamModel], func_name: str,
     state: str
 ) -> None:
+    """Add transitions for the parameters of a function.
+
+    Args:
+        transition_table: Table to fill.
+        func_params: Schema of each parameter.
+        func_name: Name of the function.
+        state: State where the parameters start.
+    """
     len_fun_params = len(func_params)
     for arg in func_params:
         path = f"{func_name}.{arg}"
@@ -234,6 +380,13 @@ def _build_func_transitions(
     func_name_states: set[str],
     func: dict
 ) -> None:
+    """Add transitions for a whole function call.
+
+    Args:
+        transition_table: Table to fill.
+        func_name_states: Collects the states inside the name.
+        func: Name and parameters of the function.
+    """
     state = _build_func_name_transitions(
         transition_table, func_name_states, func["name"]
     )
@@ -248,6 +401,14 @@ def _build_func_transitions(
 def build_transition_table(
     func_definitions: list[FuncDefinitions]
 ) -> tuple[dict[tuple[str, str], str], set[str]]:
+    """Build the automaton of all the function calls.
+
+    Args:
+        func_definitions: Validated function definitions.
+
+    Returns:
+        The transition table and the states inside names.
+    """
     transition_table: dict[tuple[str, str], str] = {}
     func_name_states: set[str] = set()
     for func_definition in func_definitions:
@@ -262,6 +423,14 @@ def build_transition_table(
 def build_outgoing_transitions(
     transition_table: dict[tuple[str, str], str]
 ) -> dict[str, list[tuple[str, str]]]:
+    """Group the transitions by source state.
+
+    Args:
+        transition_table: Table to group.
+
+    Returns:
+        The (input, next state) pairs leaving each state.
+    """
     outgoing_transitions: dict[str, list[tuple[str, str]]] = {}
 
     for (state, input_category), next_state in transition_table.items():

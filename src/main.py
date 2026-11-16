@@ -35,6 +35,14 @@ MAX_GENERATED_TOKENS = 200
 
 @dataclass
 class GenerationState:
+    """Generation progress of one prompt.
+
+    Attributes:
+        state: Current FSM state.
+        generated_token_count: Tokens chosen by the model.
+        forced_token_count: Tokens forced by the FSM.
+        error: Why the generation failed, empty on success.
+    """
     state: str = ""
     generated_token_count: int = 0
     forced_token_count: int = 0
@@ -46,6 +54,13 @@ def _look_for_generation_errors(
     generation_states: list[GenerationState],
     inputs: list[FuncCallInput]
 ) -> None:
+    """Replace the output of failed prompts with an error.
+
+    Args:
+        json_prefixes: JSON of each prompt, updated in place.
+        generation_states: Progress of each prompt.
+        inputs: The prompts.
+    """
     for idx in range(len(json_prefixes)):
         if generation_states[idx].error:
             print(f"Generation error:\n{json_prefixes[idx]}", file=sys.stderr)
@@ -60,6 +75,13 @@ def _update_generation_status(
         len_ignored_indexes: int, input_count: int,
         generation_states: list[GenerationState]
 ) -> None:
+    """Print the generation progress on one line.
+
+    Args:
+        len_ignored_indexes: Number of finished prompts.
+        input_count: Number of prompts.
+        generation_states: Progress of each prompt.
+    """
     generated_token_count = sum(
         generation_state.generated_token_count
         for generation_state in generation_states
@@ -82,6 +104,13 @@ def _update_generation_status(
 def _save_prompt_generation_state(
     generation_state: GenerationState, state: str, len_force_ids: int
 ) -> None:
+    """Record the new state and token counts of a prompt.
+
+    Args:
+        generation_state: Progress to update.
+        state: New FSM state.
+        len_force_ids: Number of forced tokens.
+    """
     generation_state.state = state
     generation_state.generated_token_count += 1
     generation_state.forced_token_count += len_force_ids
@@ -93,6 +122,17 @@ def _build_prompts_ids(
     func_definitions: list[FuncDefinitions],
     json_prefixes: list[str]
 ) -> list[list]:
+    """Build and encode the chat prompt of each input.
+
+    Args:
+        model: Model used to encode.
+        inputs: The prompts.
+        func_definitions: Functions shown to the model.
+        json_prefixes: Start of the JSON output of each prompt.
+
+    Returns:
+        The token ids of each prompt.
+    """
     tools = json.dumps([f.model_dump() for f in func_definitions])
     example = json.dumps(EXAMPLE_OUTPUT)
     system_prompt = dedent("""
@@ -128,6 +168,19 @@ def _generate_tokens(
         model: Small_LLM_Model,
         current_input_ids: list[int]
 ) -> tuple[str, str, int]:
+    """Generate one token, after adding any forced text.
+
+    Args:
+        constrained_decoder: Decoder holding the FSM.
+        model: The language model.
+        current_input_ids: Token ids, updated in place.
+
+    Returns:
+        The new FSM state, the added text and the forced count.
+
+    Raises:
+        RuntimeError: If no token is valid or the model fails.
+    """
     forced_ids = []
     generated_tokens = ""
     state = constrained_decoder.fsm.get_state()
@@ -153,6 +206,15 @@ def produce_output(
     inputs: list[FuncCallInput],
     func_definitions: list[FuncDefinitions],
 ) -> None:
+    """Generate a function call for each prompt and save them.
+
+    Args:
+        output_path: Path of the output file.
+        model: The language model.
+        constrained_decoder: Decoder holding the FSM.
+        inputs: The prompts.
+        func_definitions: Functions shown to the model.
+    """
     input_count = len(inputs)
     generation_states = [GenerationState() for _ in range(input_count)]
     json_prefixes = [
@@ -199,6 +261,7 @@ def produce_output(
 
 
 def main() -> None:
+    """Run the program and exit cleanly on errors."""
     try:
         args = parse_cli()
 

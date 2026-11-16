@@ -7,12 +7,33 @@ GENERIC_INPUTS = {"CHAR", "SPECIAL_CHAR", "DIGIT"}
 
 
 class ConstrainedDecoder:
+    """Pick the next token using the model logits and the FSM.
+
+    Attributes:
+        model: The language model.
+        fsm: Automaton checking the output.
+        vocab: Text of each token id.
+    """
     def __init__(self, model: Small_LLM_Model, fsm: JSONSchemaFSM):
+        """Build the token vocabulary.
+
+        Args:
+            model: The language model.
+            fsm: Automaton checking the output.
+        """
         self.model: Small_LLM_Model = model
         self.fsm: JSONSchemaFSM = fsm
         self.vocab: list[str] = [model.decode([i]) for i in range(VOCAB_SIZE)]
 
     def decode(self, logits: list[float]) -> tuple[int, str] | None:
+        """Pick the most likely token accepted by the FSM.
+
+        Args:
+            logits: Score of each token.
+
+        Returns:
+            The token id and its FSM state, or None.
+        """
         sorted_logits = sorted(
             range(len(logits)), key=logits.__getitem__, reverse=True
         )
@@ -34,6 +55,11 @@ class ConstrainedDecoder:
         return None
 
     def retrieve_forced_text(self) -> str:
+        """Follow the transitions forced by the FSM.
+
+        Returns:
+            The forced text, empty if nothing is forced.
+        """
         forced_text = ""
         while True:
             current_state = self.fsm.get_state()

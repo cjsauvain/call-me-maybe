@@ -13,6 +13,18 @@ def json_input_validation(
         list[FuncCallInput],
         list[FuncDefinitions]
 ]:
+    """Load and validate the input files.
+
+    Args:
+        input_file: Path of the prompts file.
+        func_definitions_file: Path of the definitions file.
+
+    Returns:
+        The prompts and the function definitions.
+
+    Raises:
+        SystemExit: If a file is missing or invalid.
+    """
     try:
         inputs = load_func_call_inputs(
             Path(input_file)
