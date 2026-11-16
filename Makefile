@@ -1,19 +1,28 @@
+ifneq ($(wildcard .env),)
+	ENV_FILE_OPT := --env-file .env
+else
+	ENV_FILE_OPT :=
+endif
+
 all: install run
 
 install:
 	uv sync
 
 run:
-	uv run python -m src
+	uv run $(ENV_FILE_OPT) python -m src
+
+run-visualize:
+	uv run $(ENV_FILE_OPT) python -m src --generation-visualization
 
 test:
-	uv run pytest --cov --cov-report=term-missing tests
+	uv run $(ENV_FILE_OPT) pytest --cov=src --cov-report=term-missing tests
 
 help:
 	uv run python -m src -h
 
 debug:
-	uv run python -m pdb .venv/bin/call-me-maybe
+	uv run $(ENV_FILE_OPT) python -m pdb -m src
 
 clean:
 	find . -type d -name __pycache__ -exec rm -rf {} +
@@ -29,4 +38,4 @@ lint:
 			--check-untyped-defs \
 			--exclude llm_sdk
 
-.PHONY: install run help debug clean lint
+.PHONY: install run run-visualize test help debug clean lint

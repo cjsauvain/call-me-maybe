@@ -1,5 +1,7 @@
 ## Subject compliance (mandatory part)
 
+- !!!!!!!!!!!!!!!!!!! SET DEVICE TO CPU BEFORE SUBMITTING !!!!!!!!!!!!!!!!!!!
+
 ### README.md (in English)
 - [ ] First line in italics: *This project has been created as part of the 42 curriculum by <login>*
 - [ ] Description section

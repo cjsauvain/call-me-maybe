@@ -26,7 +26,7 @@ def parse_cli() -> argparse.Namespace:
         default="./data/output/function_calls.json",
     )
     parser.add_argument(
-        "--generation_visualization",
+        "--generation-visualization",
         help="Enable visualization of the generation process",
         action="store_true",
         default=False,
