@@ -67,7 +67,7 @@ def _build_prompts_ids(
     system_prompt: str,
     json_prefix: str
 ) -> list[int]:
-    """Build and encode a chat prompt.
+    """Build and encode a chat prompt, followed by the JSON prefix.
 
     Args:
         model: Model used to encode.
@@ -76,7 +76,7 @@ def _build_prompts_ids(
         json_prefix: Start of the JSON output for the prompt.
 
     Returns:
-        The token ids of the prompt.
+        The token ids of the prompt and the JSON prefix.
     """
     formatted_prompt = (
         f"<|im_start|>system\n{system_prompt}<|im_end|>\n"
@@ -206,14 +206,15 @@ def _update_generation_status(
 
 def _generate_tokens(
         constrained_decoder: ConstrainedDecoder,
-        model: Small_LLM_Model,
         current_input_ids: list[int]
 ) -> tuple[str, int, list[int]]:
     """Generate one token, after adding any forced text.
 
+    Outside a function name, the text forced by the FSM is encoded and
+    added to the input ids before asking the model for the next token.
+
     Args:
-        constrained_decoder: Decoder holding the FSM.
-        model: The language model.
+        constrained_decoder: Decoder holding the model and the FSM.
         current_input_ids: Token ids, updated in place.
 
     Returns:
@@ -221,7 +222,7 @@ def _generate_tokens(
         ids of the forced tokens.
 
     Raises:
-        RuntimeError: If no token is valid or the model fails.
+        RuntimeError: If no token is accepted by the FSM.
     """
     forced_ids = []
     generated_tokens = ""
@@ -229,9 +230,13 @@ def _generate_tokens(
     if not constrained_decoder.fsm.is_in_func_name(state):
         generated_tokens = constrained_decoder.retrieve_forced_text()
         if generated_tokens:
-            forced_ids.extend(model.encode(generated_tokens)[0].tolist())
+            forced_ids.extend(
+                constrained_decoder.model.encode(generated_tokens)[0].tolist()
+            )
             current_input_ids.extend(forced_ids)
-    logits = model.get_logits_from_input_ids(current_input_ids)
+    logits = constrained_decoder.model.get_logits_from_input_ids(
+        current_input_ids
+    )
     result = constrained_decoder.decode(logits)
     if not result:
         raise RuntimeError(f"No valid token found. State: `{state}`")
@@ -241,24 +246,23 @@ def _generate_tokens(
 
 
 def produce_output(
-    output_path: str,
     generation_visualization: bool,
-    model: Small_LLM_Model,
     constrained_decoder: ConstrainedDecoder,
     inputs: list[FuncCallInput],
     func_definitions: list[FuncDefinitions],
-) -> None:
-    """Generate a function call for each prompt, one after the other,
-    and save them.
+) -> list[str]:
+    """Generate a function call for each prompt, one after the other.
 
     Args:
-        output_path: Path of the output file.
         generation_visualization: Whether to show the colored tokens
             instead of the progress line.
-        model: The language model.
-        constrained_decoder: Decoder holding the FSM.
+        constrained_decoder: Decoder holding the model and the FSM.
         inputs: The prompts.
         func_definitions: Functions shown to the model.
+
+    Returns:
+        The JSON text of each function call, or an error JSON for
+        each failed prompt.
     """
     generation_state: GenerationState = GenerationState()
     system_prompt: str = _build_system_prompt(func_definitions)
@@ -275,7 +279,7 @@ def produce_output(
             print(f"{UNDERLINED}prompt: {input.prompt}{RESET}")
         json_prefix = f'{{"prompt":{json.dumps(input.prompt)},"name":"'
         current_input_ids = _build_prompts_ids(
-            model, input, system_prompt, json_prefix
+            constrained_decoder.model, input, system_prompt, json_prefix
         )
         state = ""
         constrained_decoder.fsm.set_state(state)
@@ -286,8 +290,7 @@ def produce_output(
                 break
             try:
                 state, generated_token_id, forced_ids = _generate_tokens(
-                    constrained_decoder, model,
-                    current_input_ids
+                    constrained_decoder, current_input_ids
                 )
             except RuntimeError as e:
                 generation_state.error = str(e)
@@ -312,27 +315,26 @@ def produce_output(
             _look_for_generation_errors(json_prefix, generation_state, input)
         )
     print()
-    save_llm_output(output_path, llm_output)
+    return llm_output
 
 
 def main() -> None:
-    """Run the program and exit cleanly on errors."""
+    """Run the program, save the llm output and exit cleanly on errors."""
     try:
         args = parse_cli()
 
         inputs, func_definitions = json_input_validation(
             args.input, args.function_definitions
         )
-        model = Small_LLM_Model()
         constrained_decoder = ConstrainedDecoder(
-            model=model,
+            model=Small_LLM_Model(),
             fsm=JSONSchemaFSM(func_definitions=func_definitions)
         )
-        produce_output(
-            args.output, args.generation_visualization,
-            model, constrained_decoder,
-            inputs, func_definitions
+        llm_output = produce_output(
+            args.generation_visualization,
+            constrained_decoder, inputs, func_definitions
         )
+        save_llm_output(args.output, llm_output)
     except KeyboardInterrupt:
         print()
         print("Exiting generation process...", file=sys.stderr)
