@@ -126,13 +126,13 @@ source = { editable = "." }
 dependencies = [
     { name = "accelerate" },
     { name = "llm-sdk" },
-    { name = "mypy" },
     { name = "pydantic" },
 ]
 
 [package.dev-dependencies]
 dev = [
     { name = "flake8" },
+    { name = "mypy" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "pytest-mock" },
@@ -142,13 +142,13 @@ dev = [
 requires-dist = [
     { name = "accelerate", specifier = ">=1.15.0" },
     { name = "llm-sdk", directory = "src/lib/llm_sdk" },
-    { name = "mypy", specifier = ">=2.4.0" },
     { name = "pydantic", specifier = ">=2.14.1" },
 ]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "flake8", specifier = ">=7.5.0" },
+    { name = "mypy", specifier = ">=2.4.0" },
     { name = "pytest", specifier = ">=9.1.1" },
     { name = "pytest-cov", specifier = ">=7.1.0" },
     { name = "pytest-mock", specifier = ">=3.17.0" },

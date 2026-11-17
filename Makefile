@@ -1,3 +1,5 @@
+SHELL := /bin/zsh
+
 ifneq ($(wildcard .env),)
 	ENV_FILE_OPT := --env-file .env
 else
@@ -10,10 +12,23 @@ install:
 	uv sync
 
 run:
-	uv run $(ENV_FILE_OPT) python -m src
+	$(TIME) uv run $(ENV_FILE_OPT) python -m src
+
+run-nested:
+	$(TIME) uv run $(ENV_FILE_OPT) python -m src										\
+		--function-definitions ./data/input/nested_function_definitions.json	\
+		--input ./data/input/nested_function_calling_tests.json					\
+		--output ./data/output/nested_function_calls.json
 
 run-visualize:
-	uv run $(ENV_FILE_OPT) python -m src --generation-visualization
+	$(TIME) uv run $(ENV_FILE_OPT) python -m src --generation-visualization
+
+run-nested-visualize:
+	$(TIME) uv run $(ENV_FILE_OPT) python -m src										\
+		--generation-visualization												\
+		--function-definitions ./data/input/nested_function_definitions.json	\
+		--input ./data/input/nested_function_calling_tests.json					\
+		--output ./data/output/nested_function_calls.json
 
 test:
 	uv run $(ENV_FILE_OPT) pytest --cov=src --cov-report=term-missing tests
@@ -36,6 +51,6 @@ lint:
 			--ignore-missing-imports \
 			--disallow-untyped-defs \
 			--check-untyped-defs \
-			--exclude llm_sdk
+			--exclude src/lib
 
 .PHONY: all install run run-visualize test help debug clean lint

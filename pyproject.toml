@@ -1,14 +1,13 @@
 [project]
 name = "call-me-maybe"
 version = "0.1.0"
-description = "Add your description here"
+description = "Turn natural language prompts into JSON function calls with a small LLM and FSM-based constrained decoding"
 readme = "README.md"
 authors = [
     { name = "Jordan Sauvain", email = "102552311+cjsauvain@users.noreply.github.com" }
 ]
 requires-python = ">=3.14"
 dependencies = [
-    "mypy>=2.4.0",
     "pydantic>=2.14.1",
     "llm-sdk",
     "accelerate>=1.15.0",
@@ -24,6 +23,7 @@ build-backend = "uv_build"
 [dependency-groups]
 dev = [
     "flake8>=7.5.0",
+    "mypy>=2.4.0",
     "pytest>=9.1.1",
     "pytest-cov>=7.1.0",
     "pytest-mock>=3.17.0",
