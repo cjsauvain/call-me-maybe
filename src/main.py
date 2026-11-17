@@ -23,8 +23,8 @@ TOKEN_COLORS = [
     "\033[48;5;236m\033[97m",  # gray
     "\033[48;5;22m\033[97m"    # green
 ]
-FORCED_COLOR = "\033[48;5;136m\033[30m"   # dark goldenrod
-ERROR_COLOR = "\033[38;5;124m"   # red foreground
+FORCED_COLOR = "\033[48;5;136m\033[30m"  # dark goldenrod
+RED_FG = "\033[38;5;124m"                # red foreground
 UNDERLINED = "\033[4m"
 CLEAR_EOL = "\033[K"
 
@@ -116,11 +116,28 @@ def _look_for_generation_errors(
 
 def _display_color_legend() -> None:
     """Print the meaning of the colors used by the visualization."""
-    print(f"{UNDERLINED}Color Legend:{RESET}")
-    print(f"{FORCED_COLOR}{" " * len(TOKEN_COLORS)}{RESET}: forced tokens")
+    colors_len = len(TOKEN_COLORS)
+    legend_width = colors_len + len(": generated_tokens")
+    title_padding = legend_width - len("Color Legend:") + 1
+    forced_line_padding = legend_width - (
+        colors_len + len(": forced tokens")
+    ) + 1
+    generated_line_padding = legend_width - (
+        colors_len + len(": generated tokens")
+    ) + 1
+    print(f"{RED_FG}┌{"─" * (legend_width + 2)}┐")
+    print(
+        f"│{RESET} {UNDERLINED}Color Legend:{RESET}"
+        f"{" " * title_padding}{RED_FG}│")
+    print(
+        f"│ {FORCED_COLOR}{" " * colors_len}{RESET}"
+        f": forced tokens{" " * forced_line_padding}{RED_FG}│"
+    )
+    print("│ ", end="")
     for color in TOKEN_COLORS:
         print(f"{color} {RESET}", end="")
-    print(": generated tokens\n")
+    print(f": generated tokens{" " * generated_line_padding}{RED_FG}│")
+    print(f"└{"─" * (legend_width + 2)}┘{RESET}\n")
 
 
 def _display_progress(
@@ -163,7 +180,7 @@ def _display_progress(
     if prompt_completed:
         if generation_state.error:
             print(
-                f"\n{ERROR_COLOR}Error: {generation_state.error}{RESET}",
+                f"\n{RED_FG}Error: {generation_state.error}{RESET}",
                 end=""
             )
         print("\n")
