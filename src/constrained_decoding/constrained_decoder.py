@@ -60,6 +60,11 @@ class ConstrainedDecoder(BaseModel):
     def retrieve_forced_text(self) -> str:
         """Follow the transitions forced by the FSM.
 
+        Moves the FSM state while a state has a single outgoing
+        transition on a literal character. Stops before a generic
+        input (CHAR, DIGIT, SPECIAL_CHAR) and before the transition to
+        ACCEPT, which is left to the model so that decode returns it.
+
         Returns:
             The forced text, empty if nothing is forced.
         """

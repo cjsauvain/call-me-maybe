@@ -20,10 +20,8 @@ class JSONSchemaFSM(BaseModel):
     _outgoing_transitions: dict[str, list[tuple[str, str]]] = {}
 
     def model_post_init(self, _: Any) -> None:
-        """
-        Build the transition table, the function name states
-        and the outgoing transitions.
-        """
+        """Build the transition table, the function name states
+        and the outgoing transitions."""
         self._transition_table, self._func_name_states = \
             build_transition_table(self.func_definitions)
         self._outgoing_transitions = build_outgoing_transitions(

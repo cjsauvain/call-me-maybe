@@ -59,7 +59,8 @@ def _build_func_name_transitions(
     func_name_states: set[str],
     func_name: str
 ) -> str:
-    """Add transitions for a function name and the glue text.
+    """Add transitions for a function name and the `","parameters":{`
+    text after it.
 
     Args:
         transition_table: Table to fill.
@@ -352,6 +353,8 @@ def _build_func_params_transitions(
     state: str
 ) -> None:
     """Add transitions for the parameters of a function.
+
+    Also adds the two closing braces, the last one leading to ACCEPT.
 
     Args:
         transition_table: Table to fill.

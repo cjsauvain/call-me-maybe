@@ -55,6 +55,7 @@ def save_llm_output(output_path: str, llm_output: list[str]) -> None:
 
     Raises:
         OSError: If the file cannot be written.
+        json.JSONDecodeError: If an output is not valid JSON.
     """
     print(f"Saving output to {output_path}...")
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
