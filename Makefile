@@ -38,4 +38,4 @@ lint:
 			--check-untyped-defs \
 			--exclude llm_sdk
 
-.PHONY: install run run-visualize test help debug clean lint
+.PHONY: all install run run-visualize test help debug clean lint

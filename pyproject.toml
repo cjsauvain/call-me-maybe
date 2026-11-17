@@ -29,6 +29,13 @@ dev = [
     "pytest-mock>=3.17.0",
 ]
 
+[tool.coverage.run]
+omit = [
+    "src/lib/*",
+    "src/__init__.py",
+    "src/__main__.py"
+]
+
 [tool.uv.build-backend]
 module-name = "src"
 module-root = "."
